@@ -623,20 +623,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                       backgroundColor: { red: 0.29, green: 0.56, blue: 1.0 },
                       textFormat: { bold: true, foregroundColor: { red: 1, green: 1, blue: 1 }, fontSize: 10 },
                       horizontalAlignment: 'CENTER',
+                      verticalAlignment: 'MIDDLE',
                       wrapStrategy: 'WRAP',
                     },
                   },
-                  fields: 'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,wrapStrategy)',
+                  fields: 'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment,wrapStrategy)',
                 },
               },
-              // 전체 시트 자동 줄바꿈
+              // 전체 시트 자동 줄바꿈 + 수직 가운데 정렬
               {
                 repeatCell: {
                   range: { sheetId, startRowIndex: 1, startColumnIndex: 0, endColumnIndex: 19 },
                   cell: {
-                    userEnteredFormat: { wrapStrategy: 'WRAP' },
+                    userEnteredFormat: { wrapStrategy: 'WRAP', verticalAlignment: 'MIDDLE' },
                   },
-                  fields: 'userEnteredFormat.wrapStrategy',
+                  fields: 'userEnteredFormat(wrapStrategy,verticalAlignment)',
                 },
               },
               // 1행 고정
