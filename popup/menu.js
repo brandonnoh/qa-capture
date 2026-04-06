@@ -40,12 +40,24 @@ btnLogin.addEventListener('click', () => {
   });
 });
 
-// 캡처 시작
+// 캡처 시작 - 탭 정보를 먼저 확보한 뒤 메시지 전송
 document.getElementById('btn-capture').addEventListener('click', async () => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) return;
-  chrome.runtime.sendMessage({ action: 'start-capture', tabId: tab.id });
-  window.close();
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    if (!tab) {
+      console.error('활성 탭을 찾을 수 없습니다.');
+      return;
+    }
+    if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
+      console.warn('이 페이지에서는 캡처할 수 없습니다.');
+      return;
+    }
+    const tabId = tab.id;
+    await chrome.runtime.sendMessage({ action: 'start-capture', tabId });
+    window.close();
+  } catch (err) {
+    console.error('캡처 시작 실패:', err);
+  }
 });
 
 // 설정

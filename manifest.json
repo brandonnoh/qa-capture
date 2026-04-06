@@ -8,7 +8,8 @@
     "scripting",
     "identity",
     "storage",
-    "offscreen"
+    "offscreen",
+    "tabs"
   ],
   "host_permissions": [
     "https://www.googleapis.com/*"

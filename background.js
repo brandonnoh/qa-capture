@@ -23,14 +23,13 @@ chrome.commands.onCommand.addListener(async (command) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // 팝업 메뉴에서 캡처 시작
   if (message.action === 'start-capture') {
-    (async () => {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) return;
-      await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
+    const tabId = message.tabId;
+    if (tabId) {
+      chrome.scripting.executeScript({
+        target: { tabId },
         files: ['content.js'],
-      });
-    })();
+      }).catch((err) => console.error('content.js 주입 실패:', err));
+    }
     return false;
   }
 
