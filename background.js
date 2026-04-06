@@ -189,7 +189,14 @@ async function ensureOffscreen() {
 }
 
 // --- OAuth 토큰 관리 ---
+let scopeVerified = false;
+
 async function getAuthToken(interactive = true) {
+  // 최초 interactive 호출 시 캐시 삭제 → 최신 manifest 스코프로 토큰 재발급
+  if (interactive && !scopeVerified) {
+    await chrome.identity.clearAllCachedAuthTokens();
+    scopeVerified = true;
+  }
   return new Promise((resolve, reject) => {
     chrome.identity.getAuthToken({ interactive }, (token) => {
       if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
