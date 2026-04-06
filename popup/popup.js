@@ -44,20 +44,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (captureData.envInfo) {
       envInfoSection.style.display = 'block';
       const env = captureData.envInfo;
-      envContent.innerHTML = [
+      const items = [
         { label: '브라우저', value: env.browser },
         { label: 'OS', value: env.os },
         { label: '해상도', value: env.screenResolution },
         { label: '뷰포트', value: env.viewport },
         { label: '시간대', value: env.timezone },
         { label: '언어', value: env.language },
-      ]
-        .filter((item) => item.value)
-        .map(
-          (item) =>
-            `<div class="env-item"><span class="label">${item.label}</span><span>${item.value}</span></div>`
-        )
-        .join('');
+      ].filter((item) => item.value);
+
+      envContent.textContent = '';
+      items.forEach((item) => {
+        const row = document.createElement('div');
+        row.className = 'env-item';
+        const lbl = document.createElement('span');
+        lbl.className = 'label';
+        lbl.textContent = item.label;
+        const val = document.createElement('span');
+        val.textContent = item.value;
+        row.append(lbl, val);
+        envContent.appendChild(row);
+      });
     }
   }
 

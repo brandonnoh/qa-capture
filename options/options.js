@@ -146,9 +146,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         'https://www.googleapis.com/oauth2/v2/userinfo',
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      if (!response.ok) throw new Error('Failed to fetch user info');
       const userInfo = await response.json();
 
-      accountEmail.textContent = userInfo.email;
+      accountEmail.textContent = userInfo.email || '';
       accountStatus.textContent = '연결됨';
       accountStatus.classList.add('connected');
       btnAuth.textContent = '계정 변경';
@@ -211,28 +212,38 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const role = settings.role === 'admin' ? '관리자' : '팀원';
       configuredDesc.textContent = `${role}로 설정되어 있습니다. Alt+Shift+Q로 캡처를 시작하세요.`;
-      configuredDetails.innerHTML = `
-        <div class="detail-row"><span class="detail-label">역할</span><span class="detail-value">${role}</span></div>
-        <div class="detail-row"><span class="detail-label">시트 ID</span><span class="detail-value">${settings.spreadsheetId}</span></div>
-        <div class="detail-row"><span class="detail-label">폴더 ID</span><span class="detail-value">${settings.driveFolderId}</span></div>
-        <div class="detail-row"><span class="detail-label">시트명</span><span class="detail-value">${settings.sheetName || 'Sheet1'}</span></div>
-        <div class="detail-row"><span class="detail-label">담당자</span><span class="detail-value">${settings.defaultAssignee || '(미설정)'}</span></div>
-      `;
 
-      // 관리자인 경우 초대코드도 표시
+      // XSS 방지: textContent로 안전하게 렌더링
+      configuredDetails.textContent = '';
+      const detailRows = [
+        ['역할', role],
+        ['시트 ID', settings.spreadsheetId],
+        ['폴더 ID', settings.driveFolderId],
+        ['시트명', settings.sheetName || 'Sheet1'],
+        ['담당자', settings.defaultAssignee || '(미설정)'],
+      ];
+
       if (settings.role === 'admin') {
         const code = generateInviteCode({
           spreadsheetId: settings.spreadsheetId,
           driveFolderId: settings.driveFolderId,
           sheetName: settings.sheetName || 'Sheet1',
         });
-        configuredDetails.innerHTML += `
-          <div class="detail-row" style="margin-top:8px; padding-top:8px; border-top:1px solid var(--border);">
-            <span class="detail-label">초대코드</span>
-            <span class="detail-value" style="color:var(--primary); user-select:all;">${code}</span>
-          </div>
-        `;
+        detailRows.push(['초대코드', code]);
       }
+
+      detailRows.forEach(([label, value]) => {
+        const row = document.createElement('div');
+        row.className = 'detail-row';
+        const lbl = document.createElement('span');
+        lbl.className = 'detail-label';
+        lbl.textContent = label;
+        const val = document.createElement('span');
+        val.className = 'detail-value';
+        val.textContent = value;
+        row.append(lbl, val);
+        configuredDetails.appendChild(row);
+      });
       return;
     }
 
@@ -436,7 +447,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   btnReset.addEventListener('click', async () => {
     if (!confirm('모든 설정을 초기화하시겠습니까?')) return;
-    await chrome.storage.sync.clear();
+    await chrome.storage.sync.remove([
+      'spreadsheetId', 'driveFolderId', 'sheetName',
+      'spreadsheetUrl', 'driveFolderUrl', 'defaultAssignee', 'role',
+      'lastCategory', 'lastSeverity',
+    ]);
     sectionConfigured.style.display = 'none';
     adminFlow.style.display = 'none';
     memberFlow.style.display = 'none';
@@ -485,7 +500,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         body: JSON.stringify({ range, majorDimension: 'ROWS', values: [headers] }),
       });
 
-      if (!response.ok) throw new Error(await response.text());
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => ({}));
+        throw new Error(errBody.error?.message || '헤더 행 생성에 실패했습니다.');
+      }
 
       // 헤더 스타일링
       const sheetResponse = await fetch(
@@ -494,7 +512,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       );
       const sheetData = await sheetResponse.json();
       const sheet = sheetData.sheets?.find((s) => s.properties.title === sheetName);
-      const sheetId = sheet?.properties?.sheetId || 0;
+      if (!sheet) {
+        showStatus('헤더는 생성되었지만 스타일링 실패: 시트 이름을 확인하세요.', 'error');
+        return;
+      }
+      const sheetId = sheet.properties.sheetId;
 
       await fetch(
         `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
@@ -539,11 +561,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   // =============================================
   // 유틸
   // =============================================
+  let statusTimeout = null;
   function showStatus(message, type) {
+    if (statusTimeout) clearTimeout(statusTimeout);
     statusMessage.textContent = message;
     statusMessage.className = `status-message ${type}`;
     statusMessage.style.display = 'block';
-    setTimeout(() => { statusMessage.style.display = 'none'; }, 4000);
+    statusTimeout = setTimeout(() => { statusMessage.style.display = 'none'; }, 4000);
   }
 
   // =============================================

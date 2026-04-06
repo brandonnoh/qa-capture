@@ -1,22 +1,17 @@
-// QA Capture - Offscreen Document (이미지 크롭)
+// QA Capture - Offscreen Document (이미지 크롭 + 압축)
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message) => {
   if (message.action === 'crop-image') {
-    cropImage(message.dataUrl, message.selection).then(sendResponse);
-    return true; // async response
+    handleCrop(message.dataUrl, message.selection);
+  }
+  if (message.action === 'compress-image') {
+    handleCompress(message.dataUrl);
   }
 });
 
-async function cropImage(dataUrl, selection) {
+async function handleCrop(dataUrl, selection) {
   try {
-    const img = new Image();
-
-    await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = reject;
-      img.src = dataUrl;
-    });
-
+    const img = await loadImage(dataUrl);
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
@@ -30,8 +25,51 @@ async function cropImage(dataUrl, selection) {
     );
 
     const croppedDataUrl = canvas.toDataURL('image/png');
-    return { success: true, croppedDataUrl };
+
+    chrome.runtime.sendMessage({
+      action: 'crop-complete',
+      success: true,
+      croppedDataUrl,
+    });
   } catch (err) {
-    return { success: false, error: err.message };
+    chrome.runtime.sendMessage({
+      action: 'crop-complete',
+      success: false,
+      error: err.message,
+    });
   }
+}
+
+async function handleCompress(dataUrl) {
+  try {
+    const img = await loadImage(dataUrl);
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
+
+    // JPEG 0.8 품질로 압축
+    const compressed = canvas.toDataURL('image/jpeg', 0.8);
+
+    chrome.runtime.sendMessage({
+      action: 'compress-complete',
+      compressedDataUrl: compressed,
+    });
+  } catch {
+    chrome.runtime.sendMessage({
+      action: 'compress-complete',
+      compressedDataUrl: dataUrl,
+    });
+  }
+}
+
+function loadImage(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('이미지 로드 실패'));
+    img.src = dataUrl;
+  });
 }

@@ -133,3 +133,17 @@ body {
 }
 .status-dot.active { background: #22c55e; }
 .hidden { display: none !important; }
+.popup-toast {
+  position: fixed;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  padding: 8px 12px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  font-size: 12px;
+  text-align: center;
+  z-index: 100;
+}
