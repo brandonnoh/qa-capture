@@ -397,7 +397,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       const token = await new Promise((resolve, reject) => {
-        chrome.identity.getAuthToken({ interactive: true }, (token) => {
+        chrome.identity.getAuthToken({
+          interactive: true,
+          scopes: [
+            'https://www.googleapis.com/auth/drive',
+            'https://www.googleapis.com/auth/spreadsheets',
+            'https://www.googleapis.com/auth/userinfo.email',
+            'https://www.googleapis.com/auth/userinfo.profile',
+          ],
+        }, (token) => {
           if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
           else resolve(token);
         });
@@ -421,9 +429,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       const sheetData = await sheetRes.json();
       const sheetTitle = sheetData.properties?.title || '';
 
-      // 폴더 접근 테스트
+      // 폴더 접근 테스트 (공유 드라이브 지원)
       const folderRes = await fetch(
-        `https://www.googleapis.com/drive/v3/files/${decoded.driveFolderId}?fields=name`,
+        `https://www.googleapis.com/drive/v3/files/${decoded.driveFolderId}?fields=name&supportsAllDrives=true`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
