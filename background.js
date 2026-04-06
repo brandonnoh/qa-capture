@@ -70,15 +70,8 @@ async function handleCaptureComplete(message, sender, selectionKey) {
   };
   if (message.elementInfo) captureData.elementInfo = message.elementInfo;
   await chrome.storage.session.set({ captureData });
-
-  // 팝업 창으로 QA 폼 열기 (sidePanel.open은 user gesture 제약이 있어 사용 불가)
-  chrome.windows.create({
-    url: 'sidepanel/sidepanel.html',
-    type: 'popup',
-    width: 440,
-    height: 900,
-    focused: true,
-  });
+  // Side Panel이 storage.session.onChanged로 자동 감지하여 UI 갱신
+  notifySidePanel('capture-updated', { timestamp: captureData.timestamp });
 }
 
 const IGNORED_ACTIONS = ['crop-image', 'crop-complete', 'compress-complete'];
