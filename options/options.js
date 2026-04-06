@@ -184,7 +184,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (isLoggedIn) return;
     // 무효 토큰이 캐시에 남아있을 수 있으므로 먼저 전부 제거
     await chrome.identity.clearAllCachedAuthTokens();
-    chrome.identity.getAuthToken({ interactive: true }, async (token) => {
+    chrome.identity.getAuthToken({
+      interactive: true,
+      scopes: [
+        'https://www.googleapis.com/auth/drive',
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/userinfo.profile',
+      ],
+    }, async (token) => {
       if (chrome.runtime.lastError) {
         showStatus('로그인 실패: ' + chrome.runtime.lastError.message, 'error');
       } else {

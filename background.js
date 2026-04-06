@@ -189,46 +189,20 @@ async function ensureOffscreen() {
 }
 
 // --- OAuth 토큰 관리 ---
-let driveTokenVerified = false;
+const REQUIRED_SCOPES = [
+  'https://www.googleapis.com/auth/drive',
+  'https://www.googleapis.com/auth/spreadsheets',
+  'https://www.googleapis.com/auth/userinfo.email',
+  'https://www.googleapis.com/auth/userinfo.profile',
+];
 
 async function getAuthToken(interactive = true) {
-  const token = await new Promise((resolve, reject) => {
-    chrome.identity.getAuthToken({ interactive }, (t) => {
+  return new Promise((resolve, reject) => {
+    chrome.identity.getAuthToken({ interactive, scopes: REQUIRED_SCOPES }, (token) => {
       if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
-      else resolve(t);
+      else resolve(token);
     });
   });
-
-  // Drive 토큰 스코프 검증 (서비스워커 생애 1회)
-  if (interactive && !driveTokenVerified) {
-    driveTokenVerified = true;
-    try {
-      const res = await fetch(
-        'https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=' + token
-      );
-      if (res.ok) {
-        const info = await res.json();
-        const hasFullDrive = (info.scope || '').includes('/auth/drive ') ||
-                             (info.scope || '').endsWith('/auth/drive');
-        if (!hasFullDrive) {
-          // drive.file만 있음 → 서버에서 토큰 revoke 후 재발급
-          await fetch('https://accounts.google.com/o/oauth2/revoke?token=' + token);
-          await new Promise((r) => chrome.identity.removeCachedAuthToken({ token }, r));
-          await chrome.identity.clearAllCachedAuthTokens();
-          return new Promise((resolve, reject) => {
-            chrome.identity.getAuthToken({ interactive: true }, (t) => {
-              if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
-              else resolve(t);
-            });
-          });
-        }
-      }
-    } catch {
-      // 검증 실패해도 진행
-    }
-  }
-
-  return token;
 }
 
 async function fetchWithAuth(url, options = {}) {
@@ -300,7 +274,11 @@ async function uploadToDrive(blob, fileName, folderId) {
   }
   if (!resp.ok) {
     const errBody = await resp.json().catch(() => ({}));
-    throw new Error(errBody.error?.message || `Drive 업로드 실패 (${resp.status})`);
+    const msg = errBody.error?.message || '';
+    if (resp.status === 404 || msg.includes('File not found')) {
+      throw new Error('Drive 폴더에 접근할 수 없습니다. 설정 → 로그아웃 → 다시 로그인 후 Drive 권한을 허용해주세요.');
+    }
+    throw new Error(msg || `Drive 업로드 실패 (${resp.status})`);
   }
   return resp.json();
 }
