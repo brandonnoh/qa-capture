@@ -296,10 +296,13 @@ async function uploadToDrive(blob, fileName, folderId) {
 }
 
 async function makeFilePublic(fileId) {
-  const resp = await fetchWithAuth(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ role: 'reader', type: 'anyone' }),
-  });
+  const resp = await fetchWithAuth(
+    `https://www.googleapis.com/drive/v3/files/${fileId}/permissions?supportsAllDrives=true`,
+    {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: 'reader', type: 'anyone' }),
+    }
+  );
   if (!resp.ok) console.warn('파일 공개 설정 실패 (계속 진행):', resp.status);
 }
 
