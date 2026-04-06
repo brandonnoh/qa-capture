@@ -227,7 +227,18 @@ async function handleSubmitQA(formData) {
     throw new Error('캡처 데이터가 없습니다. 다시 캡처해주세요.');
   }
   const sheetName = settings.sheetName || 'Sheet1';
-  const driveResult = await uploadToDrive(dataUrlToBlob(captureData.screenshot), `QA_${Date.now()}.png`, settings.driveFolderId);
+  const userName = (formData.assignee || '').split('@')[0] || 'unknown';
+  const now = new Date();
+  const dateStr = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+    String(now.getHours()).padStart(2, '0'),
+    String(now.getMinutes()).padStart(2, '0'),
+    String(now.getSeconds()).padStart(2, '0'),
+  ].join('');
+  const fileName = `QA_${userName}_${dateStr}.png`;
+  const driveResult = await uploadToDrive(dataUrlToBlob(captureData.screenshot), fileName, settings.driveFolderId);
   await makeFilePublic(driveResult.id);
   const webViewLink = `https://drive.google.com/file/d/${driveResult.id}/view`;
   await appendToSheet(settings.spreadsheetId, sheetName, buildRowData(formData, captureData, webViewLink));
