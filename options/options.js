@@ -172,7 +172,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  btnAuth.addEventListener('click', () => {
+  btnAuth.addEventListener('click', async () => {
+    // 계정 변경: 기존 토큰 전부 삭제 후 재인증
+    if (isLoggedIn) {
+      try {
+        const oldToken = await new Promise((resolve, reject) => {
+          chrome.identity.getAuthToken({ interactive: false }, (t) => {
+            if (t) resolve(t);
+            else reject();
+          });
+        });
+        await new Promise((r) => chrome.identity.removeCachedAuthToken({ token: oldToken }, r));
+      } catch { /* 토큰 없으면 무시 */ }
+      await chrome.identity.clearAllCachedAuthTokens();
+    }
+
     chrome.identity.getAuthToken({ interactive: true }, async (token) => {
       if (chrome.runtime.lastError) {
         showStatus('로그인 실패: ' + chrome.runtime.lastError.message, 'error');
