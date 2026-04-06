@@ -576,6 +576,37 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       const sheetId = sheet.properties.sheetId;
 
+      // 컬럼별 적정 너비 (px) — 내용에 맞춰 설정, 최대 350
+      const colWidths = [
+        50,   // A: 번호
+        140,  // B: 날짜/시간
+        160,  // C: 담당자
+        70,   // D: 분류
+        70,   // E: 심각도
+        300,  // F: 코멘트
+        300,  // G: 재현단계
+        110,  // H: 이미지링크
+        70,   // I: 상태
+        350,  // J: 페이지URL
+        150,  // K: 선택요소
+        350,  // L: CSS선택자
+        350,  // M: XPath
+        130,  // N: 브라우저
+        130,  // O: OS/기기
+        120,  // P: 화면해상도
+        100,  // Q: 뷰포트
+        160,  // R: 시간대
+        60,   // S: 언어
+      ];
+
+      const columnWidthRequests = colWidths.map((width, i) => ({
+        updateDimensionProperties: {
+          range: { sheetId, dimension: 'COLUMNS', startIndex: i, endIndex: i + 1 },
+          properties: { pixelSize: width },
+          fields: 'pixelSize',
+        },
+      }));
+
       await fetch(
         `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
         {
@@ -583,6 +614,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
             requests: [
+              // 헤더 스타일
               {
                 repeatCell: {
                   range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 19 },
@@ -591,17 +623,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                       backgroundColor: { red: 0.29, green: 0.56, blue: 1.0 },
                       textFormat: { bold: true, foregroundColor: { red: 1, green: 1, blue: 1 }, fontSize: 10 },
                       horizontalAlignment: 'CENTER',
+                      wrapStrategy: 'WRAP',
                     },
                   },
-                  fields: 'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment)',
+                  fields: 'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,wrapStrategy)',
                 },
               },
+              // 전체 시트 자동 줄바꿈
+              {
+                repeatCell: {
+                  range: { sheetId, startRowIndex: 1, startColumnIndex: 0, endColumnIndex: 19 },
+                  cell: {
+                    userEnteredFormat: { wrapStrategy: 'WRAP' },
+                  },
+                  fields: 'userEnteredFormat.wrapStrategy',
+                },
+              },
+              // 1행 고정
               {
                 updateSheetProperties: {
                   properties: { sheetId, gridProperties: { frozenRowCount: 1 } },
                   fields: 'gridProperties.frozenRowCount',
                 },
               },
+              // 컬럼 너비 설정
+              ...columnWidthRequests,
             ],
           }),
         }
