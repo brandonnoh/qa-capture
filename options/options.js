@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       accountEmail.textContent = userInfo.email || '';
       accountStatus.textContent = '연결됨';
       accountStatus.classList.add('connected');
-      btnAuth.textContent = '계정 변경';
+      btnAuth.style.display = 'none';
 
       if (userInfo.picture) {
         accountAvatar.style.backgroundImage = `url(${userInfo.picture})`;
@@ -169,6 +169,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       accountStatus.classList.remove('connected');
       accountAvatar.style.display = 'none';
       btnAuth.textContent = 'Google 로그인';
+      btnAuth.style.display = 'inline-block';
       btnLogout.style.display = 'none';
       isLoggedIn = false;
       return false;
@@ -176,20 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   btnAuth.addEventListener('click', async () => {
-    // 계정 변경: 기존 토큰 전부 삭제 후 재인증
-    if (isLoggedIn) {
-      try {
-        const oldToken = await new Promise((resolve, reject) => {
-          chrome.identity.getAuthToken({ interactive: false }, (t) => {
-            if (t) resolve(t);
-            else reject();
-          });
-        });
-        await new Promise((r) => chrome.identity.removeCachedAuthToken({ token: oldToken }, r));
-      } catch { /* 토큰 없으면 무시 */ }
-      await chrome.identity.clearAllCachedAuthTokens();
-    }
-
+    if (isLoggedIn) return; // 이미 로그인 상태면 무시
     chrome.identity.getAuthToken({ interactive: true }, async (token) => {
       if (chrome.runtime.lastError) {
         showStatus('로그인 실패: ' + chrome.runtime.lastError.message, 'error');

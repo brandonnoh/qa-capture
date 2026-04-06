@@ -257,12 +257,16 @@
 
     requestAnimationFrame(function () {
       setTimeout(function () {
-        chrome.runtime.sendMessage({
-          action: 'element-selected',
-          elementInfo, selection, envInfo,
-          pageUrl: window.location.href,
-          pageTitle: document.title,
-        });
+        try {
+          chrome.runtime.sendMessage({
+            action: 'element-selected',
+            elementInfo, selection, envInfo,
+            pageUrl: window.location.href,
+            pageTitle: document.title,
+          });
+        } catch {
+          // Extension context invalidated (확장 새로고침 후 발생) — 무시
+        }
       }, 150);
     });
   }

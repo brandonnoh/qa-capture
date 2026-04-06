@@ -193,19 +193,23 @@
     // 브라우저가 repaint할 시간을 확보한 뒤 캡처 요청
     requestAnimationFrame(() => {
       setTimeout(() => {
-        chrome.runtime.sendMessage({
-          action: 'area-selected',
-          selection: {
-            x: Math.round(left * dpr),
-            y: Math.round(top * dpr),
-            width: Math.round(width * dpr),
-            height: Math.round(height * dpr),
-            devicePixelRatio: dpr,
-          },
-          envInfo,
-          pageUrl,
-          pageTitle,
-        });
+        try {
+          chrome.runtime.sendMessage({
+            action: 'area-selected',
+            selection: {
+              x: Math.round(left * dpr),
+              y: Math.round(top * dpr),
+              width: Math.round(width * dpr),
+              height: Math.round(height * dpr),
+              devicePixelRatio: dpr,
+            },
+            envInfo,
+            pageUrl,
+            pageTitle,
+          });
+        } catch {
+          // Extension context invalidated — 무시
+        }
       }, 150);
     });
   }
