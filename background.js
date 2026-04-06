@@ -1,5 +1,14 @@
 // QA Capture - Background Service Worker
 
+// --- 로그인 상태 확인 ---
+function checkLoggedIn() {
+  return new Promise((resolve) => {
+    chrome.identity.getAuthToken({ interactive: false }, (token) => {
+      resolve(!!token && !chrome.runtime.lastError);
+    });
+  });
+}
+
 // --- 단축키 리스너 ---
 chrome.commands.onCommand.addListener(async (command) => {
   if (command !== 'capture-qa') return;
@@ -7,6 +16,28 @@ chrome.commands.onCommand.addListener(async (command) => {
   if (!tab || !tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
     return;
   }
+
+  const loggedIn = await checkLoggedIn();
+  if (!loggedIn) {
+    // 로그인 안 됨 → 탭에 알림 표시
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: () => {
+        const toast = document.createElement('div');
+        Object.assign(toast.style, {
+          position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)',
+          zIndex: '2147483647', padding: '12px 24px', borderRadius: '8px',
+          background: '#dc2626', color: '#fff', fontSize: '14px', fontWeight: '600',
+          fontFamily: '-apple-system, sans-serif', boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+        });
+        toast.textContent = 'QA Capture: 먼저 Google 로그인이 필요합니다.';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+      },
+    });
+    return;
+  }
+
   await chrome.scripting.executeScript({
     target: { tabId: tab.id },
     files: ['content.js'],

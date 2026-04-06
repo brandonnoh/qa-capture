@@ -68,10 +68,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // --- 저장된 기본값 로드 ---
+  // --- 담당자: 로그인된 이메일로 기본 입력 ---
   const defaults = await chrome.storage.sync.get(['defaultAssignee', 'lastCategory', 'lastSeverity']);
   if (defaults.defaultAssignee) {
     document.getElementById('assignee').value = defaults.defaultAssignee;
+  } else {
+    try {
+      const token = await new Promise((resolve, reject) => {
+        chrome.identity.getAuthToken({ interactive: false }, (t) => {
+          if (chrome.runtime.lastError || !t) reject();
+          else resolve(t);
+        });
+      });
+      const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const user = await res.json();
+        if (user.email) {
+          document.getElementById('assignee').value = user.email;
+        }
+      }
+    } catch { /* 로그인 안 되어 있으면 무시 */ }
   }
   if (defaults.lastCategory) {
     document.getElementById('category').value = defaults.lastCategory;

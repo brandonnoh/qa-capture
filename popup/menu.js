@@ -54,6 +54,17 @@ btnLogin.addEventListener('click', () => {
 
 document.getElementById('btn-capture').addEventListener('click', async () => {
   try {
+    // 로그인 체크
+    const loggedIn = await new Promise((resolve) => {
+      chrome.identity.getAuthToken({ interactive: false }, (t) => {
+        resolve(!!t && !chrome.runtime.lastError);
+      });
+    });
+    if (!loggedIn) {
+      showToast('먼저 Google 로그인이 필요합니다.');
+      return;
+    }
+
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab || !tab.url) {
       showToast('탭을 찾을 수 없습니다.');
