@@ -341,35 +341,88 @@ async function clearRowFormat(spreadsheetId, sheetName, appendResult) {
     const sheet = sheetData.sheets?.find((s) => s.properties.title === sheetName);
     if (!sheet) return;
 
-    // 해당 행 서식 초기화 (흰색 배경, 검정 텍스트, 볼드 해제)
+    const sid = sheet.properties.sheetId;
+    const row = rowIndex;
+
     await fetchWithAuth(
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          requests: [{
-            repeatCell: {
-              range: {
-                sheetId: sheet.properties.sheetId,
-                startRowIndex: rowIndex,
-                endRowIndex: rowIndex + 1,
-                startColumnIndex: 0,
-                endColumnIndex: 19,
-              },
-              cell: {
-                userEnteredFormat: {
-                  backgroundColor: { red: 1, green: 1, blue: 1 },
-                  textFormat: {
-                    bold: false,
-                    foregroundColor: { red: 0, green: 0, blue: 0 },
-                    fontSize: 10,
+          requests: [
+            // 1. 행 서식 초기화 (흰색 배경, 검정 텍스트, 볼드 해제, 수직 가운데, 줄바꿈)
+            {
+              repeatCell: {
+                range: { sheetId: sid, startRowIndex: row, endRowIndex: row + 1, startColumnIndex: 0, endColumnIndex: 19 },
+                cell: {
+                  userEnteredFormat: {
+                    backgroundColor: { red: 1, green: 1, blue: 1 },
+                    textFormat: { bold: false, foregroundColor: { red: 0, green: 0, blue: 0 }, fontSize: 10 },
+                    verticalAlignment: 'MIDDLE',
+                    wrapStrategy: 'WRAP',
                   },
                 },
+                fields: 'userEnteredFormat(backgroundColor,textFormat,verticalAlignment,wrapStrategy)',
               },
-              fields: 'userEnteredFormat(backgroundColor,textFormat)',
             },
-          }],
+            // 2. H열(index 7) numberFormat을 "자동"으로 → HYPERLINK 수식이 링크로 표시
+            {
+              repeatCell: {
+                range: { sheetId: sid, startRowIndex: row, endRowIndex: row + 1, startColumnIndex: 7, endColumnIndex: 8 },
+                cell: {
+                  userEnteredFormat: { numberFormat: { type: 'NUMBER_FORMAT_TYPE_UNSPECIFIED' } },
+                },
+                fields: 'userEnteredFormat.numberFormat',
+              },
+            },
+            // 3. A열(index 0) numberFormat "자동" → =ROW()-1 수식 인식
+            {
+              repeatCell: {
+                range: { sheetId: sid, startRowIndex: row, endRowIndex: row + 1, startColumnIndex: 0, endColumnIndex: 1 },
+                cell: {
+                  userEnteredFormat: { numberFormat: { type: 'NUMBER_FORMAT_TYPE_UNSPECIFIED' } },
+                },
+                fields: 'userEnteredFormat.numberFormat',
+              },
+            },
+            // 4. E열(index 4) 심각도 드롭다운 유효성 검사
+            {
+              setDataValidation: {
+                range: { sheetId: sid, startRowIndex: row, endRowIndex: row + 1, startColumnIndex: 4, endColumnIndex: 5 },
+                rule: {
+                  condition: { type: 'ONE_OF_LIST', values: [{ userEnteredValue: '심각' }, { userEnteredValue: '보통' }, { userEnteredValue: '경미' }] },
+                  showCustomUi: true,
+                  strict: false,
+                },
+              },
+            },
+            // 5. D열(index 3) 분류 드롭다운 유효성 검사
+            {
+              setDataValidation: {
+                range: { sheetId: sid, startRowIndex: row, endRowIndex: row + 1, startColumnIndex: 3, endColumnIndex: 4 },
+                rule: {
+                  condition: { type: 'ONE_OF_LIST', values: [
+                    { userEnteredValue: 'UI' }, { userEnteredValue: '기능' }, { userEnteredValue: '데이터' },
+                    { userEnteredValue: '성능' }, { userEnteredValue: '호환성' }, { userEnteredValue: '보안' }, { userEnteredValue: 'UX' },
+                  ]},
+                  showCustomUi: true,
+                  strict: false,
+                },
+              },
+            },
+            // 6. I열(index 8) 상태 드롭다운
+            {
+              setDataValidation: {
+                range: { sheetId: sid, startRowIndex: row, endRowIndex: row + 1, startColumnIndex: 8, endColumnIndex: 9 },
+                rule: {
+                  condition: { type: 'ONE_OF_LIST', values: [{ userEnteredValue: 'Open' }, { userEnteredValue: 'Resolved' }, { userEnteredValue: 'Won\'t Fix' }] },
+                  showCustomUi: true,
+                  strict: false,
+                },
+              },
+            },
+          ],
         }),
       }
     );
