@@ -1,5 +1,8 @@
 // QA Capture - Background Service Worker
 
+// 아이콘 클릭 시 Side Panel 열기 (팝업 메뉴 대신)
+chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+
 function checkLoggedIn() {
   return new Promise((resolve) => {
     chrome.identity.getAuthToken({ interactive: false }, (token) => {
@@ -47,9 +50,6 @@ async function handleShortcut(scriptFile) {
   const tab = await getActiveTab();
   if (!isCapturableTab(tab)) return;
   if (!(await checkLoggedIn())) { await showLoginRequiredToast(tab.id); return; }
-  // 단축키는 사용자 제스처이므로 여기서 Side Panel을 먼저 열 수 있음
-  const windowId = tab.windowId || (await chrome.windows.getCurrent()).id;
-  chrome.sidePanel.open({ windowId }).catch(() => {});
   await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: [scriptFile] });
 }
 
@@ -70,8 +70,15 @@ async function handleCaptureComplete(message, sender, selectionKey) {
   };
   if (message.elementInfo) captureData.elementInfo = message.elementInfo;
   await chrome.storage.session.set({ captureData });
-  // Side Panel은 이미 사용자 제스처 시점에 열려 있음
-  notifySidePanel('capture-updated', { timestamp: captureData.timestamp });
+
+  // 팝업 창으로 QA 폼 열기 (sidePanel.open은 user gesture 제약이 있어 사용 불가)
+  chrome.windows.create({
+    url: 'sidepanel/sidepanel.html',
+    type: 'popup',
+    width: 440,
+    height: 900,
+    focused: true,
+  });
 }
 
 const IGNORED_ACTIONS = ['crop-image', 'crop-complete', 'compress-complete'];

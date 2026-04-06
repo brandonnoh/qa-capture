@@ -74,9 +74,6 @@ document.getElementById('btn-capture').addEventListener('click', async () => {
       showToast('이 페이지에서는 캡처할 수 없습니다.');
       return;
     }
-    // 사용자 제스처 시점에 Side Panel 먼저 열기
-    const windowId = tab.windowId || (await chrome.windows.getCurrent()).id;
-    chrome.sidePanel.open({ windowId }).catch(() => {});
     const result = await chrome.runtime.sendMessage({ action: 'start-capture', tabId: tab.id });
     if (result?.ok) {
       window.close();
@@ -106,9 +103,6 @@ document.getElementById('btn-inspect').addEventListener('click', async () => {
       showToast('이 페이지에서는 사용할 수 없습니다.');
       return;
     }
-    // 사용자 제스처 시점에 Side Panel 먼저 열기
-    const windowId = tab.windowId || (await chrome.windows.getCurrent()).id;
-    chrome.sidePanel.open({ windowId }).catch(() => {});
     const result = await chrome.runtime.sendMessage({ action: 'start-element-inspect', tabId: tab.id });
     if (result?.ok) {
       window.close();
