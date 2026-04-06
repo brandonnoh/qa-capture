@@ -1,0 +1,135 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  width: 240px;
+  background: #fff;
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.logo {
+  background: #4A90FF;
+  color: #fff;
+  font-weight: 800;
+  font-size: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.header h1 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+}
+.menu {
+  padding: 6px;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  color: #1e293b;
+  text-align: left;
+  transition: background 0.12s;
+}
+.menu-item:hover { background: #f1f5f9; }
+.menu-item svg { flex-shrink: 0; color: #64748b; }
+.menu-item .label {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.menu-item .sublabel {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 1px;
+}
+.divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 4px 6px;
+}
+.auth-section {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.auth-logged-in {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.auth-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  background-size: cover;
+  flex-shrink: 0;
+}
+.auth-info {
+  flex: 1;
+  min-width: 0;
+}
+.auth-email {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.auth-status {
+  font-size: 10px;
+  color: #22c55e;
+}
+.btn-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px;
+  background: #4A90FF;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-login:hover { background: #3A7CE6; }
+.btn-login svg { flex-shrink: 0; }
+.status-bar {
+  padding: 8px 16px 10px;
+  font-size: 11px;
+  color: #94a3b8;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #cbd5e1;
+}
+.status-dot.active { background: #22c55e; }
+.hidden { display: none !important; }

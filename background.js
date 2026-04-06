@@ -50,10 +50,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // async response
   }
 
-  if (message.action === 'crop-complete') {
-    handleCropComplete(message);
-    return false;
-  }
+  // crop-complete는 cropImage() 내부 핸들러에서 처리됨
 });
 
 // --- 영역 선택 완료 처리 ---
@@ -111,26 +108,18 @@ async function cropImage(dataUrl, selection) {
     }
   }
 
-  return new Promise((resolve, reject) => {
-    const handler = (msg) => {
-      if (msg.action === 'crop-complete') {
-        chrome.runtime.onMessage.removeListener(handler);
-        if (msg.error) {
-          reject(new Error(msg.error));
-        } else {
-          resolve(msg.croppedDataUrl);
-        }
-      }
-    };
-    chrome.runtime.onMessage.addListener(handler);
-
-    // offscreen document에 크롭 요청
-    chrome.runtime.sendMessage({
-      action: 'crop-image',
-      dataUrl,
-      selection,
-    });
+  // sendMessage로 크롭 요청 → 응답으로 결과 수신
+  const result = await chrome.runtime.sendMessage({
+    action: 'crop-image',
+    dataUrl,
+    selection,
   });
+
+  if (!result || !result.success) {
+    throw new Error(result?.error || '이미지 크롭 실패');
+  }
+
+  return result.croppedDataUrl;
 }
 
 // --- QA 제출 처리 ---

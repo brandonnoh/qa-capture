@@ -1,8 +1,9 @@
 // QA Capture - Offscreen Document (이미지 크롭)
 
-chrome.runtime.onMessage.addListener((message) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'crop-image') {
-    cropImage(message.dataUrl, message.selection);
+    cropImage(message.dataUrl, message.selection).then(sendResponse);
+    return true; // async response
   }
 });
 
@@ -22,23 +23,15 @@ async function cropImage(dataUrl, selection) {
     canvas.width = selection.width;
     canvas.height = selection.height;
 
-    // 선택 영역만 크롭하여 그리기
     ctx.drawImage(
       img,
-      selection.x, selection.y, selection.width, selection.height, // source
-      0, 0, selection.width, selection.height                      // destination
+      selection.x, selection.y, selection.width, selection.height,
+      0, 0, selection.width, selection.height
     );
 
     const croppedDataUrl = canvas.toDataURL('image/png');
-
-    chrome.runtime.sendMessage({
-      action: 'crop-complete',
-      croppedDataUrl,
-    });
+    return { success: true, croppedDataUrl };
   } catch (err) {
-    chrome.runtime.sendMessage({
-      action: 'crop-complete',
-      error: err.message,
-    });
+    return { success: false, error: err.message };
   }
 }

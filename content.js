@@ -118,6 +118,8 @@
     selectionBox.remove();
     sizeLabel.remove();
     guide.remove();
+    document.removeEventListener('mousemove', onMouseMove, true);
+    document.removeEventListener('mouseup', onMouseUp, true);
     document.removeEventListener('keydown', onKeyDown, true);
   }
 
