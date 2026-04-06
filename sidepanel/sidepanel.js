@@ -177,8 +177,10 @@ async function startCapture(scriptFile) {
       showStatus('먼저 Google 로그인이 필요합니다.', 'error');
       return;
     }
-    // 현재 활성 탭에 스크립트 주입
-    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    // 현재 활성 탭 찾기 (Side Panel 자체가 아닌 일반 웹 탭)
+    const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    const tab = tabs.find((t) => t.url && !t.url.startsWith('chrome-extension://'))
+      || tabs[0];
     if (!tab || !tab.url) {
       showStatus('탭을 찾을 수 없습니다.', 'error');
       return;
@@ -277,16 +279,21 @@ function setSubmitLoading(loading) {
   if (loader) loader.classList.toggle('hidden', !loading);
 }
 
-// --- 스토리지 변경 감지로 자동 갱신 ---
+// --- 데이터 갱신 감지 (이중 리스너) ---
 function listenForUpdates() {
+  // 1. storage 변경 감지 (가장 확실)
   chrome.storage.session.onChanged.addListener((changes) => {
     if (changes.captureData && changes.captureData.newValue) {
-      // 새 캡처 데이터가 저장된 경우에만 로드 (삭제 시 무시)
       loadCaptureData();
     }
   });
+  // 2. background 메시지 (폴백)
   chrome.runtime.onMessage.addListener((message) => {
     if (message.action === 'capture-updated') loadCaptureData();
+  });
+  // 3. Side Panel이 포커스 받을 때마다 최신 데이터 확인 (최후 방어)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) loadCaptureData();
   });
 }
 

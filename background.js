@@ -12,8 +12,9 @@ function checkLoggedIn() {
 }
 
 async function getActiveTab() {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  return tab;
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+  // 확장 페이지가 아닌 일반 웹 탭 반환
+  return tabs.find((t) => t.url && !t.url.startsWith('chrome-extension://')) || tabs[0];
 }
 
 function isCapturableTab(tab) {
