@@ -304,7 +304,7 @@ async function makeFilePublic(fileId) {
 }
 
 async function appendToSheet(spreadsheetId, sheetName, rowData) {
-  const range = `'${sheetName.replace(/'/g, "''")}'!A:P`;
+  const range = `'${sheetName.replace(/'/g, "''")}'!A:S`;
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
   const resp = await fetchWithAuth(url, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -352,7 +352,7 @@ async function clearRowFormat(spreadsheetId, sheetName, appendResult) {
                 startRowIndex: rowIndex,
                 endRowIndex: rowIndex + 1,
                 startColumnIndex: 0,
-                endColumnIndex: 16,
+                endColumnIndex: 19,
               },
               cell: {
                 userEnteredFormat: {
@@ -381,11 +381,14 @@ function buildRowData(formData, captureData, webViewLink) {
     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
   });
   const env = captureData.envInfo || {};
+  const el = captureData.elementInfo || {};
   const safe = webViewLink.replace(/"/g, '""');
+  const elDesc = el.tagName ? `${el.tagName}${el.id ? '#' + el.id : ''}${el.classList?.length ? '.' + el.classList.join('.') : ''}` : '';
   return [
     '=ROW()-1', dateStr, captureData.pageUrl || '', formData.category || '',
     formData.comment || '', `=HYPERLINK("${safe}", "스크린샷 보기")`, 'Open',
     formData.assignee || '', formData.severity || '', formData.reproSteps || '',
+    elDesc, el.selector || '', el.xpath || '',
     env.browser || '', env.os || '', env.screenResolution || '',
     env.viewport || '', env.timezone || '', env.language || '',
   ];

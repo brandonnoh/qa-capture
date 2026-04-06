@@ -542,10 +542,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       const headers = [
         '번호', '날짜/시간', '페이지URL', '분류', '코멘트', '이미지링크',
         '상태', '담당자', '심각도', '재현단계',
+        '선택요소', 'CSS선택자', 'XPath',
         '브라우저', 'OS/기기', '화면해상도', '뷰포트', '시간대', '언어',
       ];
 
-      const range = `${sheetName}!A1:P1`;
+      const range = `${sheetName}!A1:S1`;
       const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
 
       const response = await fetch(url, {
@@ -584,7 +585,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             requests: [
               {
                 repeatCell: {
-                  range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 16 },
+                  range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 19 },
                   cell: {
                     userEnteredFormat: {
                       backgroundColor: { red: 0.29, green: 0.56, blue: 1.0 },
