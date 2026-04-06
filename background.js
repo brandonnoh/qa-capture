@@ -60,7 +60,8 @@ chrome.commands.onCommand.addListener(async (command) => {
 
 async function handleCaptureComplete(message, sender, selectionKey) {
   const tab = sender.tab;
-  const screenshot = await chrome.tabs.captureVisibleTab(null, { format: 'png' });
+  const windowId = tab.windowId;
+  const screenshot = await chrome.tabs.captureVisibleTab(windowId, { format: 'png' });
   const cropped = await cropImage(screenshot, message[selectionKey]);
   const compressed = await compressImage(cropped);
   const captureData = {

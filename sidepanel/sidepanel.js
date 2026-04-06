@@ -192,6 +192,18 @@ async function startCapture(scriptFile) {
   }
 }
 
+// --- 환경 정보 토글 ---
+function bindEnvToggle() {
+  const toggle = getEl('env-toggle');
+  if (!toggle) return;
+  toggle.addEventListener('click', () => {
+    const details = getEl('env-details');
+    const isHidden = details.classList.contains('hidden');
+    details.classList.toggle('hidden', !isHidden);
+    toggle.querySelector('.chevron').classList.toggle('open', isHidden);
+  });
+}
+
 // --- 키보드 단축키 ---
 function bindKeyboardShortcut() {
   getEl('qa-form').addEventListener('keydown', (e) => {
