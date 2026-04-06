@@ -23,6 +23,9 @@ async function checkSettings() {
   if (!s.spreadsheetId || !s.driveFolderId) {
     showStatus('먼저 설정에서 프로젝트를 연결해주세요.', 'error');
     getEl('btn-submit').disabled = true;
+  } else {
+    hideStatus();
+    getEl('btn-submit').disabled = false;
   }
 }
 
@@ -291,9 +294,16 @@ function listenForUpdates() {
   chrome.runtime.onMessage.addListener((message) => {
     if (message.action === 'capture-updated') loadCaptureData();
   });
-  // 3. Side Panel이 포커스 받을 때마다 최신 데이터 확인 (최후 방어)
+  // 3. sync storage 변경 감지 (설정 변경 시 상태 갱신)
+  chrome.storage.sync.onChanged.addListener(() => {
+    checkSettings();
+  });
+  // 4. Side Panel이 포커스 받을 때마다 최신 데이터 + 설정 확인
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) loadCaptureData();
+    if (!document.hidden) {
+      loadCaptureData();
+      checkSettings();
+    }
   });
 }
 

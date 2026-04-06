@@ -189,20 +189,46 @@ async function ensureOffscreen() {
 }
 
 // --- OAuth 토큰 관리 ---
-let scopeVerified = false;
+let driveTokenVerified = false;
 
 async function getAuthToken(interactive = true) {
-  // 최초 interactive 호출 시 캐시 삭제 → 최신 manifest 스코프로 토큰 재발급
-  if (interactive && !scopeVerified) {
-    await chrome.identity.clearAllCachedAuthTokens();
-    scopeVerified = true;
-  }
-  return new Promise((resolve, reject) => {
-    chrome.identity.getAuthToken({ interactive }, (token) => {
+  const token = await new Promise((resolve, reject) => {
+    chrome.identity.getAuthToken({ interactive }, (t) => {
       if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
-      else resolve(token);
+      else resolve(t);
     });
   });
+
+  // Drive 토큰 스코프 검증 (서비스워커 생애 1회)
+  if (interactive && !driveTokenVerified) {
+    driveTokenVerified = true;
+    try {
+      const res = await fetch(
+        'https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=' + token
+      );
+      if (res.ok) {
+        const info = await res.json();
+        const hasFullDrive = (info.scope || '').includes('/auth/drive ') ||
+                             (info.scope || '').endsWith('/auth/drive');
+        if (!hasFullDrive) {
+          // drive.file만 있음 → 서버에서 토큰 revoke 후 재발급
+          await fetch('https://accounts.google.com/o/oauth2/revoke?token=' + token);
+          await new Promise((r) => chrome.identity.removeCachedAuthToken({ token }, r));
+          await chrome.identity.clearAllCachedAuthTokens();
+          return new Promise((resolve, reject) => {
+            chrome.identity.getAuthToken({ interactive: true }, (t) => {
+              if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+              else resolve(t);
+            });
+          });
+        }
+      }
+    } catch {
+      // 검증 실패해도 진행
+    }
+  }
+
+  return token;
 }
 
 async function fetchWithAuth(url, options = {}) {
@@ -235,22 +261,42 @@ async function handleSubmitQA(formData) {
   return { success: true, driveLink: webViewLink };
 }
 
-// --- Google Drive 업로드 ---
+// --- Google Drive 업로드 (multipart/related 형식) ---
 async function uploadToDrive(blob, fileName, folderId) {
   const token = await getAuthToken(true);
-  const metadata = { name: fileName, parents: [folderId], mimeType: 'image/png' };
-  const buildForm = () => {
-    const f = new FormData();
-    f.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-    f.append('file', blob);
-    return f;
-  };
+  const mimeType = blob.type || 'image/jpeg';
+  const metadata = JSON.stringify({ name: fileName, parents: [folderId], mimeType });
+
+  // blob → base64 변환
+  const arrayBuffer = await blob.arrayBuffer();
+  const bytes = new Uint8Array(arrayBuffer);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  const base64Data = btoa(binary);
+
+  const boundary = '----QACaptureUpload' + Date.now();
+  const body =
+    '--' + boundary + '\r\n' +
+    'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+    metadata + '\r\n' +
+    '--' + boundary + '\r\n' +
+    'Content-Type: ' + mimeType + '\r\n' +
+    'Content-Transfer-Encoding: base64\r\n\r\n' +
+    base64Data + '\r\n' +
+    '--' + boundary + '--';
+
   const url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink';
-  let resp = await fetch(url, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: buildForm() });
+  const headers = {
+    Authorization: 'Bearer ' + token,
+    'Content-Type': 'multipart/related; boundary=' + boundary,
+  };
+
+  let resp = await fetch(url, { method: 'POST', headers, body });
   if (resp.status === 401) {
     await new Promise((r) => chrome.identity.removeCachedAuthToken({ token }, r));
     const t2 = await getAuthToken(true);
-    resp = await fetch(url, { method: 'POST', headers: { Authorization: `Bearer ${t2}` }, body: buildForm() });
+    headers.Authorization = 'Bearer ' + t2;
+    resp = await fetch(url, { method: 'POST', headers, body });
   }
   if (!resp.ok) {
     const errBody = await resp.json().catch(() => ({}));
