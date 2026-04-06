@@ -137,9 +137,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function checkAuthStatus() {
     try {
       const token = await new Promise((resolve, reject) => {
-        chrome.identity.getAuthToken({ interactive: false }, (token) => {
-          if (chrome.runtime.lastError || !token) reject(new Error('Not authenticated'));
-          else resolve(token);
+        chrome.identity.getAuthToken({ interactive: false }, (t) => {
+          if (chrome.runtime.lastError || !t) reject(new Error('Not authenticated'));
+          else resolve(t);
         });
       });
 
@@ -147,7 +147,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         'https://www.googleapis.com/oauth2/v2/userinfo',
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      if (!response.ok) throw new Error('Failed to fetch user info');
+      if (!response.ok) {
+        // 토큰이 무효화됨 — 캐시에서 제거
+        await new Promise((r) => chrome.identity.removeCachedAuthToken({ token }, r));
+        throw new Error('Token invalid');
+      }
       const userInfo = await response.json();
 
       accountEmail.textContent = userInfo.email || '';
@@ -177,7 +181,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   btnAuth.addEventListener('click', async () => {
-    if (isLoggedIn) return; // 이미 로그인 상태면 무시
+    if (isLoggedIn) return;
+    // 무효 토큰이 캐시에 남아있을 수 있으므로 먼저 전부 제거
+    await chrome.identity.clearAllCachedAuthTokens();
     chrome.identity.getAuthToken({ interactive: true }, async (token) => {
       if (chrome.runtime.lastError) {
         showStatus('로그인 실패: ' + chrome.runtime.lastError.message, 'error');
