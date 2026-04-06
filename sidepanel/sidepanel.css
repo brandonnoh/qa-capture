@@ -32,7 +32,7 @@ body {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 /* 패널 레이아웃 */

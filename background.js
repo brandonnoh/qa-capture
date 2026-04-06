@@ -61,6 +61,19 @@ chrome.commands.onCommand.addListener(async (command) => {
 async function handleCaptureComplete(message, sender, selectionKey) {
   const tab = sender.tab;
   const windowId = tab.windowId;
+  const isElementSelect = message.action === 'element-selected';
+  const existing = (await chrome.storage.session.get('captureData')).captureData;
+
+  // Element selection with existing screenshot: merge element info without replacing screenshot
+  if (isElementSelect && existing && existing.screenshot) {
+    existing.elementInfo = message.elementInfo || null;
+    existing.timestamp = new Date().toISOString();
+    await chrome.storage.session.set({ captureData: existing });
+    notifySidePanel('capture-updated', { timestamp: existing.timestamp });
+    return;
+  }
+
+  // Area capture or first capture: take screenshot and build full captureData
   const screenshot = await chrome.tabs.captureVisibleTab(windowId, { format: 'png' });
   const cropped = await cropImage(screenshot, message[selectionKey]);
   const compressed = await compressImage(cropped);
@@ -71,7 +84,6 @@ async function handleCaptureComplete(message, sender, selectionKey) {
   };
   if (message.elementInfo) captureData.elementInfo = message.elementInfo;
   await chrome.storage.session.set({ captureData });
-  // Side Panel이 storage.session.onChanged로 자동 감지하여 UI 갱신
   notifySidePanel('capture-updated', { timestamp: captureData.timestamp });
 }
 

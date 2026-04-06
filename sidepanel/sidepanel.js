@@ -30,14 +30,13 @@ async function checkSettings() {
 async function loadCaptureData() {
   const stored = await chrome.storage.session.get('captureData');
   const data = stored.captureData;
-  if (data && data.screenshot) {
-    displayScreenshot(data.screenshot);
-    if (data.envInfo) displayEnvInfo(data.envInfo);
-    if (data.elementInfo) displayElementInfo(data.elementInfo);
-    else hideElementInfo();
-  } else {
-    resetPreview();
-  }
+  if (!data) { resetPreview(); return; }
+  // Screenshot and element info are independent sections
+  if (data.screenshot) displayScreenshot(data.screenshot);
+  else resetPreviewImage();
+  if (data.envInfo) displayEnvInfo(data.envInfo);
+  if (data.elementInfo) displayElementInfo(data.elementInfo);
+  else hideElementInfo();
 }
 
 function displayScreenshot(dataUrl) {
@@ -47,9 +46,13 @@ function displayScreenshot(dataUrl) {
   getEl('preview-empty').classList.add('hidden');
 }
 
-function resetPreview() {
+function resetPreviewImage() {
   getEl('preview-image').classList.remove('visible');
   getEl('preview-empty').classList.remove('hidden');
+}
+
+function resetPreview() {
+  resetPreviewImage();
   hideElementInfo();
 }
 
@@ -89,6 +92,9 @@ function displayElementInfo(info) {
   getEl('el-class').textContent = cls || '(없음)';
   getEl('el-text').textContent = truncate(info.textContent || '', 80);
   getEl('el-selector').textContent = info.selector || '';
+  getEl('el-xpath').textContent = info.xpath || '';
+  getEl('el-dimensions').textContent = info.dimensions || '';
+  getEl('el-position').textContent = info.position || '';
   getEl('element-info').classList.remove('hidden');
 }
 
