@@ -301,14 +301,32 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    const sheetName = document.getElementById('sheet-name').value.trim() || 'Sheet1';
-    const defaultAssignee = document.getElementById('default-assignee').value.trim();
+    // 스프레드시트에서 첫 번째 시트 탭 이름 자동 가져오기
+    let sheetName = 'Sheet1';
+    try {
+      const token = await new Promise((resolve, reject) => {
+        chrome.identity.getAuthToken({ interactive: true }, (t) => {
+          if (chrome.runtime.lastError || !t) reject(new Error(chrome.runtime.lastError?.message || 'No token'));
+          else resolve(t);
+        });
+      });
+      const res = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const firstSheet = data.sheets?.[0]?.properties?.title;
+        if (firstSheet) sheetName = firstSheet;
+      }
+    } catch {
+      // API 실패 시 Sheet1 기본값 사용
+    }
 
     await chrome.storage.sync.set({
       spreadsheetId,
       driveFolderId,
       sheetName,
-      defaultAssignee,
       spreadsheetUrl: spreadsheetUrlInput.value.trim(),
       driveFolderUrl: driveFolderUrlInput.value.trim(),
       role: 'admin',
