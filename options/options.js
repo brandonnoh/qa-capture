@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Step 1: 인증
   const btnAuth = document.getElementById('btn-auth');
+  const btnLogout = document.getElementById('btn-logout');
   const accountEmail = document.getElementById('account-email');
   const accountStatus = document.getElementById('account-status');
   const accountAvatar = document.getElementById('account-avatar');
@@ -160,6 +161,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       isLoggedIn = true;
+      btnLogout.style.display = 'inline-block';
       return true;
     } catch {
       accountEmail.textContent = '로그인이 필요합니다';
@@ -167,6 +169,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       accountStatus.classList.remove('connected');
       accountAvatar.style.display = 'none';
       btnAuth.textContent = 'Google 로그인';
+      btnLogout.style.display = 'none';
       isLoggedIn = false;
       return false;
     }
@@ -195,6 +198,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateView();
       }
     });
+  });
+
+  // --- 로그아웃 ---
+  btnLogout.addEventListener('click', async () => {
+    try {
+      const token = await new Promise((resolve) => {
+        chrome.identity.getAuthToken({ interactive: false }, (t) => resolve(t || null));
+      });
+      if (token) {
+        // 토큰 무효화
+        await fetch(`https://accounts.google.com/o/oauth2/revoke?token=${token}`);
+        await new Promise((r) => chrome.identity.removeCachedAuthToken({ token }, r));
+      }
+      await chrome.identity.clearAllCachedAuthTokens();
+      await checkAuthStatus();
+      updateView();
+      showStatus('로그아웃되었습니다.', 'success');
+    } catch (err) {
+      showStatus('로그아웃 실패: ' + err.message, 'error');
+    }
   });
 
   // =============================================
