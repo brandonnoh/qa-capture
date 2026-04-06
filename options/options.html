@@ -91,18 +91,8 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="sheet-name">
-              시트 이름
-              <span class="help-text">데이터를 저장할 시트 탭 이름 (기본: Sheet1)</span>
-            </label>
-            <input type="text" id="sheet-name" placeholder="Sheet1" />
-          </div>
-
-          <div class="form-group">
-            <label for="default-assignee">기본 담당자</label>
-            <input type="text" id="default-assignee" placeholder="홍길동" />
-          </div>
+          <input type="hidden" id="sheet-name" value="Sheet1" />
+          <input type="hidden" id="default-assignee" value="" />
 
           <div class="form-actions">
             <button type="button" id="btn-init-sheet" class="btn-secondary">
