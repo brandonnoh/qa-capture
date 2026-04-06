@@ -646,6 +646,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                   fields: 'gridProperties.frozenRowCount',
                 },
               },
+              // H열(이미지링크, index 7) 전체를 "자동" 서식으로 — HYPERLINK 수식 인식
+              {
+                repeatCell: {
+                  range: { sheetId, startRowIndex: 1, startColumnIndex: 7, endColumnIndex: 8 },
+                  cell: {
+                    userEnteredFormat: {
+                      numberFormat: { type: 'NUMBER_FORMAT_TYPE_UNSPECIFIED' },
+                    },
+                  },
+                  fields: 'userEnteredFormat.numberFormat',
+                },
+              },
+              // A열(번호) 서식도 "자동"으로 — =ROW()-1 수식 인식
+              {
+                repeatCell: {
+                  range: { sheetId, startRowIndex: 1, startColumnIndex: 0, endColumnIndex: 1 },
+                  cell: {
+                    userEnteredFormat: {
+                      numberFormat: { type: 'NUMBER_FORMAT_TYPE_UNSPECIFIED' },
+                    },
+                  },
+                  fields: 'userEnteredFormat.numberFormat',
+                },
+              },
               // 컬럼 너비 설정
               ...columnWidthRequests,
             ],
