@@ -521,7 +521,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // =============================================
   btnInitSheet.addEventListener('click', async () => {
     const spreadsheetId = extractSpreadsheetId(spreadsheetUrlInput.value);
-    const sheetName = document.getElementById('sheet-name').value.trim() || 'Sheet1';
 
     if (!spreadsheetId) {
       showStatus('먼저 올바른 스프레드시트 주소를 입력해주세요.', 'error');
@@ -530,6 +529,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     btnInitSheet.disabled = true;
     btnInitSheet.textContent = '생성 중...';
+
+    // 시트 이름 자동 조회
+    let sheetName = 'Sheet1';
+    try {
+      const token2 = await new Promise((resolve, reject) => {
+        chrome.identity.getAuthToken({ interactive: true }, (t) => {
+          if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+          else resolve(t);
+        });
+      });
+      const nameRes = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties`,
+        { headers: { Authorization: `Bearer ${token2}` } }
+      );
+      if (nameRes.ok) {
+        const nameData = await nameRes.json();
+        const first = nameData.sheets?.[0]?.properties?.title;
+        if (first) sheetName = first;
+      }
+    } catch { /* 조회 실패 시 Sheet1 기본값 */ }
 
     try {
       const token = await new Promise((resolve, reject) => {
