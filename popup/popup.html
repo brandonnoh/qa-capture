@@ -42,9 +42,11 @@
         <div class="tag-group" id="category-tags">
           <button type="button" class="tag" data-value="UI">UI</button>
           <button type="button" class="tag" data-value="기능">기능</button>
-          <button type="button" class="tag" data-value="정책">정책</button>
+          <button type="button" class="tag" data-value="데이터">데이터</button>
           <button type="button" class="tag" data-value="성능">성능</button>
-          <button type="button" class="tag" data-value="접근성">접근성</button>
+          <button type="button" class="tag" data-value="호환성">호환성</button>
+          <button type="button" class="tag" data-value="보안">보안</button>
+          <button type="button" class="tag" data-value="UX">UX</button>
         </div>
         <input type="hidden" id="category" value="" />
       </div>
@@ -53,9 +55,9 @@
       <div class="form-group">
         <label>심각도</label>
         <div class="tag-group" id="severity-tags">
-          <button type="button" class="tag tag-critical" data-value="Critical">Critical</button>
-          <button type="button" class="tag tag-major" data-value="Major">Major</button>
-          <button type="button" class="tag tag-minor" data-value="Minor">Minor</button>
+          <button type="button" class="tag tag-critical" data-value="심각">심각</button>
+          <button type="button" class="tag tag-major" data-value="보통">보통</button>
+          <button type="button" class="tag tag-minor" data-value="경미">경미</button>
         </div>
         <input type="hidden" id="severity" value="" />
       </div>
@@ -75,7 +77,7 @@
       <!-- 재현단계 -->
       <div class="form-group">
         <label for="repro-steps">재현단계</label>
-        <textarea id="repro-steps" rows="2" placeholder="1. 페이지 접속&#10;2. 버튼 클릭&#10;3. ..."></textarea>
+        <textarea id="repro-steps" rows="4" placeholder="1. 페이지 접속&#10;2. 버튼 클릭&#10;3. ..."></textarea>
       </div>
 
       <!-- 환경 정보 표시 -->
