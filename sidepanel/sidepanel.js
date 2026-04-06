@@ -235,6 +235,9 @@ async function submitForm() {
     comment: getEl('comment').value,
     reproSteps: getEl('repro-steps').value,
   };
+  if (!formData.comment.trim()) {
+    throw new Error('코멘트를 입력해주세요.');
+  }
   await chrome.storage.sync.set({
     lastCategory: formData.category,
     lastSeverity: formData.severity,
@@ -242,12 +245,23 @@ async function submitForm() {
   const response = await sendMessage({ action: 'submit-qa', formData });
   if (response && response.success) {
     showStatus('QA 이슈가 성공적으로 기록되었습니다!', 'success');
-    getEl('btn-text').textContent = '완료!';
-    resetPreview();
-    setTimeout(() => setSubmitLoading(false), 2000);
+    resetAfterSubmit();
   } else {
     throw new Error((response && response.error) || '제출에 실패했습니다.');
   }
+}
+
+function resetAfterSubmit() {
+  // 폼 입력값 초기화 (코멘트, 재현단계만 — 담당자/분류/심각도는 유지)
+  getEl('comment').value = '';
+  getEl('repro-steps').value = '';
+  // 미리보기 초기화
+  resetPreview();
+  // 버튼 상태 복원
+  getEl('btn-submit').disabled = false;
+  getEl('btn-text').textContent = '제출하기';
+  const loader = getEl('btn-loader');
+  if (loader) loader.classList.add('hidden');
 }
 
 function setSubmitLoading(loading) {
@@ -259,11 +273,12 @@ function setSubmitLoading(loading) {
 
 // --- 스토리지 변경 감지로 자동 갱신 ---
 function listenForUpdates() {
-  // storage 변경 감지 (캡처 완료 시 background가 저장)
   chrome.storage.session.onChanged.addListener((changes) => {
-    if (changes.captureData) loadCaptureData();
+    if (changes.captureData && changes.captureData.newValue) {
+      // 새 캡처 데이터가 저장된 경우에만 로드 (삭제 시 무시)
+      loadCaptureData();
+    }
   });
-  // background 메시지도 수신 (fallback)
   chrome.runtime.onMessage.addListener((message) => {
     if (message.action === 'capture-updated') loadCaptureData();
   });
