@@ -385,9 +385,10 @@ function buildRowData(formData, captureData, webViewLink) {
   const safe = webViewLink.replace(/"/g, '""');
   const elDesc = el.tagName ? `${el.tagName}${el.id ? '#' + el.id : ''}${el.classList?.length ? '.' + el.classList.join('.') : ''}` : '';
   return [
-    '=ROW()-1', dateStr, captureData.pageUrl || '', formData.category || '',
-    formData.comment || '', `=HYPERLINK("${safe}", "스크린샷 보기")`, 'Open',
-    formData.assignee || '', formData.severity || '', formData.reproSteps || '',
+    '=ROW()-1', dateStr, formData.assignee || '', formData.category || '',
+    formData.severity || '', formData.comment || '',
+    formData.reproSteps || '', `=HYPERLINK("${safe}", "스크린샷 보기")`,
+    'Open', captureData.pageUrl || '',
     elDesc, el.selector || '', el.xpath || '',
     env.browser || '', env.os || '', env.screenResolution || '',
     env.viewport || '', env.timezone || '', env.language || '',
