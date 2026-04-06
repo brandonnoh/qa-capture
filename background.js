@@ -190,12 +190,37 @@ async function ensureOffscreen() {
 
 // --- OAuth 토큰 관리 ---
 async function getAuthToken(interactive = true) {
-  return new Promise((resolve, reject) => {
-    chrome.identity.getAuthToken({ interactive }, (token) => {
+  const token = await new Promise((resolve, reject) => {
+    chrome.identity.getAuthToken({ interactive }, (t) => {
       if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
-      else resolve(token);
+      else resolve(t);
     });
   });
+
+  // 토큰 스코프 검증: drive 스코프가 없으면 강제 갱신
+  try {
+    const res = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${token}`);
+    if (res.ok) {
+      const info = await res.json();
+      const scopes = info.scope || '';
+      if (!scopes.includes('auth/drive') || scopes.includes('drive.file')) {
+        // 이전 drive.file 토큰 → revoke 후 재발급
+        await fetch(`https://accounts.google.com/o/oauth2/revoke?token=${token}`);
+        await new Promise((r) => chrome.identity.removeCachedAuthToken({ token }, r));
+        await chrome.identity.clearAllCachedAuthTokens();
+        return new Promise((resolve, reject) => {
+          chrome.identity.getAuthToken({ interactive: true }, (t) => {
+            if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+            else resolve(t);
+          });
+        });
+      }
+    }
+  } catch {
+    // 스코프 검증 실패해도 토큰은 반환
+  }
+
+  return token;
 }
 
 async function fetchWithAuth(url, options = {}) {
