@@ -122,8 +122,8 @@ async function handleAreaSelected(message, sender) {
   chrome.windows.create({
     url: 'popup/popup.html',
     type: 'popup',
-    width: 520,
-    height: 720,
+    width: 620,
+    height: 960,
     focused: true,
   });
 }

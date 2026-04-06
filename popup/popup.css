@@ -199,6 +199,70 @@ select {
   padding-right: 30px;
 }
 
+/* 태그 버튼 (분류 / 심각도) */
+.tag-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  padding: 6px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  background: var(--bg);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.tag:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(74, 144, 255, 0.05);
+}
+
+.tag.active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
+/* 심각도 색상 */
+.tag-critical.active {
+  border-color: var(--critical);
+  background: var(--critical);
+}
+.tag-critical:hover {
+  border-color: var(--critical);
+  color: var(--critical);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.tag-major.active {
+  border-color: var(--major);
+  background: var(--major);
+}
+.tag-major:hover {
+  border-color: var(--major);
+  color: var(--major);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.tag-minor.active {
+  border-color: var(--minor);
+  background: var(--minor);
+}
+.tag-minor:hover {
+  border-color: var(--minor);
+  color: var(--minor);
+  background: rgba(34, 197, 94, 0.05);
+}
+
 /* 환경 정보 */
 .env-info {
   border: 1px solid var(--border);

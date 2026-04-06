@@ -91,12 +91,31 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     } catch { /* 로그인 안 되어 있으면 무시 */ }
   }
-  if (defaults.lastCategory) {
-    document.getElementById('category').value = defaults.lastCategory;
+  // --- 태그 버튼 클릭 핸들러 ---
+  function setupTagGroup(groupId, hiddenInputId) {
+    const group = document.getElementById(groupId);
+    const hidden = document.getElementById(hiddenInputId);
+    group.addEventListener('click', (e) => {
+      const tag = e.target.closest('.tag');
+      if (!tag) return;
+      group.querySelectorAll('.tag').forEach((t) => t.classList.remove('active'));
+      tag.classList.add('active');
+      hidden.value = tag.dataset.value;
+    });
+    // 저장된 값 복원
+    return (savedValue) => {
+      if (!savedValue) return;
+      hidden.value = savedValue;
+      const match = group.querySelector(`.tag[data-value="${savedValue}"]`);
+      if (match) match.classList.add('active');
+    };
   }
-  if (defaults.lastSeverity) {
-    document.getElementById('severity').value = defaults.lastSeverity;
-  }
+
+  const restoreCategory = setupTagGroup('category-tags', 'category');
+  const restoreSeverity = setupTagGroup('severity-tags', 'severity');
+
+  if (defaults.lastCategory) restoreCategory(defaults.lastCategory);
+  if (defaults.lastSeverity) restoreSeverity(defaults.lastSeverity);
 
   // --- 환경 정보 토글 ---
   envToggle.addEventListener('click', () => {
