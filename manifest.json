@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "QA Capture",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlQ+VBEQpwCsu5d6k0GNuZ9QrwMECO5janUlipLEpG1Dnu9h+6qTokaE0VuDW9BNiuKWYkWnc8DkZ4VCoPTBze+fdCA2kVAWOQqp/um5q3++qqeyGTjP1dMzVDeW50Fs4Ug3pbPGBFuSz3sCDOnnneEimqxvVRXqrkrUVtPG27JnjMYXBv6Vr1pzVwl2PtWqf2LhTYJ48kmnsBRmJ/tlDmsvGFICyr8YGoeDVUtJhIIE2LbLNuqMQywspgnboDnOul2sHS+HCfO5TLA/w5j1av+kXQyboZb2eCWOaJmuQS+1Pp/Y/yOs4G8RhgP/Cha/a+dq3ke6xxXdibf8Ra3oZWwIDAQAB",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "QA 이슈를 스크린샷과 함께 Google Sheets에 기록합니다",
   "permissions": [
     "activeTab",
