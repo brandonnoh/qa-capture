@@ -292,7 +292,7 @@ async function uploadToDrive(blob, fileName, folderId) {
     const errBody = await uploadResp.json().catch(() => ({}));
     throw new Error(errBody.error?.message || `파일 업로드 실패 (${uploadResp.status})`);
   }
-  return resp.json();
+  return uploadResp.json();
 }
 
 async function makeFilePublic(fileId) {
