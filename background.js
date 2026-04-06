@@ -243,7 +243,7 @@ async function uploadToDrive(blob, fileName, folderId) {
 
   // Step 1: 업로드 세션 시작 (메타데이터만 JSON으로 전송)
   let initResp = await fetch(
-    'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id,webViewLink',
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true&fields=id,webViewLink',
     {
       method: 'POST',
       headers: {
@@ -259,7 +259,7 @@ async function uploadToDrive(blob, fileName, folderId) {
     await new Promise((r) => chrome.identity.removeCachedAuthToken({ token }, r));
     token = await getAuthToken(true);
     initResp = await fetch(
-      'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id,webViewLink',
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true&fields=id,webViewLink',
       {
         method: 'POST',
         headers: {
