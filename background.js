@@ -235,49 +235,62 @@ async function handleSubmitQA(formData) {
   return { success: true, driveLink: webViewLink };
 }
 
-// --- Google Drive 업로드 (Blob 기반 multipart/related) ---
+// --- Google Drive 업로드 (resumable upload — 포맷 문제 완전 회피) ---
 async function uploadToDrive(blob, fileName, folderId) {
-  const token = await getAuthToken(true);
+  let token = await getAuthToken(true);
   const mimeType = blob.type || 'image/jpeg';
   const metadata = { name: fileName, parents: [folderId], mimeType };
-  const boundary = '----QACaptureUpload' + Date.now();
 
-  // Blob 배열로 multipart/related body 구성 (바이너리 직접 전송)
-  const body = new Blob([
-    '--' + boundary + '\r\n' +
-    'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
-    JSON.stringify(metadata) + '\r\n' +
-    '--' + boundary + '\r\n' +
-    'Content-Type: ' + mimeType + '\r\n\r\n',
-    blob,
-    '\r\n--' + boundary + '--',
-  ]);
-
-  const url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink';
-
-  async function doUpload(authToken) {
-    return fetch(url, {
+  // Step 1: 업로드 세션 시작 (메타데이터만 JSON으로 전송)
+  let initResp = await fetch(
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id,webViewLink',
+    {
       method: 'POST',
       headers: {
-        Authorization: 'Bearer ' + authToken,
-        'Content-Type': 'multipart/related; boundary=' + boundary,
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json; charset=UTF-8',
       },
-      body,
-    });
+      body: JSON.stringify(metadata),
+    }
+  );
+
+  // 401이면 토큰 갱신 후 재시도
+  if (initResp.status === 401) {
+    await new Promise((r) => chrome.identity.removeCachedAuthToken({ token }, r));
+    token = await getAuthToken(true);
+    initResp = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id,webViewLink',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + token,
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: JSON.stringify(metadata),
+      }
+    );
   }
 
-  let resp = await doUpload(token);
-  if (resp.status === 401) {
-    await new Promise((r) => chrome.identity.removeCachedAuthToken({ token }, r));
-    resp = await doUpload(await getAuthToken(true));
-  }
-  if (!resp.ok) {
-    const errBody = await resp.json().catch(() => ({}));
+  if (!initResp.ok) {
+    const errBody = await initResp.json().catch(() => ({}));
     const msg = errBody.error?.message || '';
-    if (resp.status === 404 || msg.includes('File not found')) {
-      throw new Error('Drive 폴더 접근 불가. myaccount.google.com/permissions 에서 QA Capture 삭제 후 다시 로그인하세요.');
-    }
-    throw new Error(msg || `Drive 업로드 실패 (${resp.status})`);
+    const status = initResp.status;
+    throw new Error(`Drive 업로드 초기화 실패 (${status}): ${msg}`);
+  }
+
+  const uploadUrl = initResp.headers.get('Location');
+  if (!uploadUrl) throw new Error('Drive 업로드 URL을 받지 못했습니다.');
+
+  // Step 2: 파일 본체 업로드 (바이너리 직접 전송, 인증 불필요)
+  const uploadResp = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': mimeType },
+    body: blob,
+  });
+
+  if (!uploadResp.ok) {
+    const errBody = await uploadResp.json().catch(() => ({}));
+    throw new Error(errBody.error?.message || `파일 업로드 실패 (${uploadResp.status})`);
   }
   return resp.json();
 }
