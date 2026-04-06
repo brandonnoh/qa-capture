@@ -36,6 +36,27 @@ async function showLoginRequiredToast(tabId) {
   }});
 }
 
+async function showCaptureCompleteToast(tabId) {
+  try {
+    await chrome.scripting.executeScript({ target: { tabId }, func: () => {
+      if (document.getElementById('qa-capture-toast')) return;
+      const t = document.createElement('div');
+      t.id = 'qa-capture-toast';
+      Object.assign(t.style, {
+        position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)',
+        zIndex: '2147483647', padding: '12px 24px', borderRadius: '8px',
+        background: '#16a34a', color: '#fff', fontSize: '14px', fontWeight: '600',
+        fontFamily: '-apple-system, sans-serif', boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+        cursor: 'pointer',
+      });
+      t.textContent = '✓ 캡처 완료! QA 아이콘을 클릭하여 결과를 확인하세요.';
+      t.addEventListener('click', () => t.remove());
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 4000);
+    }});
+  } catch { /* 무시 */ }
+}
+
 function notifySidePanel(action, data) {
   chrome.runtime.sendMessage({ action, ...data }).catch(() => {});
 }
@@ -71,6 +92,7 @@ async function handleCaptureComplete(message, sender, selectionKey) {
     existing.timestamp = new Date().toISOString();
     await chrome.storage.session.set({ captureData: existing });
     notifySidePanel('capture-updated', { timestamp: existing.timestamp });
+    showCaptureCompleteToast(tab.id);
     return;
   }
 
@@ -86,6 +108,9 @@ async function handleCaptureComplete(message, sender, selectionKey) {
   if (message.elementInfo) captureData.elementInfo = message.elementInfo;
   await chrome.storage.session.set({ captureData });
   notifySidePanel('capture-updated', { timestamp: captureData.timestamp });
+
+  // Side Panel이 열려있지 않으면 페이지에 토스트로 안내
+  showCaptureCompleteToast(tab.id);
 }
 
 const IGNORED_ACTIONS = ['crop-image', 'crop-complete', 'compress-complete'];
