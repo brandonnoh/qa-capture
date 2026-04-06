@@ -19,20 +19,21 @@ chrome.commands.onCommand.addListener(async (command) => {
   }
 });
 
-// --- 확장 아이콘 클릭 시에도 캡처 시작 ---
-chrome.action.onClicked.addListener(async (tab) => {
-  if (!tab || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
-    console.warn('이 페이지에서는 캡처할 수 없습니다.');
-    return;
-  }
-  await chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    files: ['content.js'],
-  });
-});
-
 // --- 메시지 핸들러 ---
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // 팝업 메뉴에서 캡처 시작
+  if (message.action === 'start-capture') {
+    (async () => {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) return;
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ['content.js'],
+      });
+    })();
+    return false;
+  }
+
   if (message.action === 'area-selected') {
     handleAreaSelected(message, sender);
     return false;
