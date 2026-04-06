@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "QA Capture",
+  "version": "1.0.0",
+  "description": "QA 이슈를 스크린샷과 함께 Google Sheets에 기록합니다",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "identity",
+    "storage",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "https://www.googleapis.com/*"
+  ],
+  "oauth2": {
+    "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/drive.file",
+      "https://www.googleapis.com/auth/spreadsheets"
+    ]
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "QA Capture"
+  },
+  "commands": {
+    "capture-qa": {
+      "suggested_key": {
+        "default": "Alt+Shift+Q",
+        "mac": "Alt+Shift+Q"
+      },
+      "description": "QA 스크린샷 캡처"
+    }
+  },
+  "options_page": "options/options.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

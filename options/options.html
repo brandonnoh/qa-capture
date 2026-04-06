@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QA Capture 설정</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="logo">QA</div>
+      <div>
+        <h1>QA Capture</h1>
+        <p class="subtitle">QA 이슈를 캡처하고 팀과 공유하세요</p>
+      </div>
+    </header>
+
+    <!-- ============ STEP 1: 구글 로그인 ============ -->
+    <section class="section" id="section-auth">
+      <div class="step-badge">Step 1</div>
+      <h2>Google 로그인</h2>
+      <p class="section-desc">Google 계정으로 로그인하면 Drive와 Sheets에 접근할 수 있습니다.</p>
+      <div class="account-row">
+        <div class="account-info">
+          <div id="account-avatar" class="account-avatar" style="display:none;"></div>
+          <div>
+            <span id="account-email" class="account-email">로그인이 필요합니다</span>
+            <span id="account-status" class="account-status"></span>
+          </div>
+        </div>
+        <button type="button" id="btn-auth" class="btn-primary-sm">Google 로그인</button>
+      </div>
+    </section>
+
+    <!-- ============ STEP 2: 역할 선택 ============ -->
+    <section class="section" id="section-role" style="display:none;">
+      <div class="step-badge">Step 2</div>
+      <h2>시작 방식 선택</h2>
+      <p class="section-desc">새 QA 프로젝트를 만들거나, 초대코드로 기존 프로젝트에 참여하세요.</p>
+      <div class="role-cards">
+        <button type="button" id="btn-role-admin" class="role-card">
+          <div class="role-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <div class="role-title">새 프로젝트 만들기</div>
+          <div class="role-desc">시트와 폴더를 설정하고 팀원을 초대합니다</div>
+        </button>
+        <button type="button" id="btn-role-member" class="role-card">
+          <div class="role-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+            </svg>
+          </div>
+          <div class="role-title">���대코드로 참여</div>
+          <div class="role-desc">받은 초대코드를 입력하여 팀에 합류합니다</div>
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ 관리자: 프로젝트 설정 ============ -->
+    <div id="admin-flow" style="display:none;">
+      <form id="settings-form">
+        <section class="section">
+          <div class="step-badge">Step 3</div>
+          <h2>프로젝트 설정</h2>
+
+          <div class="form-group">
+            <label for="spreadsheet-url">
+              Google Sheets 주소
+              <span class="help-text">스프레드시트 URL을 그대로 붙여넣으세요</span>
+            </label>
+            <input type="text" id="spreadsheet-url" placeholder="https://docs.google.com/spreadsheets/d/1BxiMVs.../edit" required />
+            <div id="spreadsheet-id-preview" class="id-preview" style="display:none;">
+              <span class="id-label">추출된 ID:</span>
+              <code id="spreadsheet-id-value"></code>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="drive-folder-url">
+              Google Drive 폴더 주소
+              <span class="help-text">Drive 폴더 URL을 그대로 붙여넣으세요</span>
+            </label>
+            <input type="text" id="drive-folder-url" placeholder="https://drive.google.com/drive/folders/1a2b3c..." required />
+            <div id="drive-folder-id-preview" class="id-preview" style="display:none;">
+              <span class="id-label">추출된 ID:</span>
+              <code id="drive-folder-id-value"></code>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="sheet-name">
+              시트 이름
+              <span class="help-text">데이터를 저장할 시트 탭 이름 (기본: Sheet1)</span>
+            </label>
+            <input type="text" id="sheet-name" placeholder="Sheet1" />
+          </div>
+
+          <div class="form-group">
+            <label for="default-assignee">기본 담당자</label>
+            <input type="text" id="default-assignee" placeholder="홍길동" />
+          </div>
+
+          <div class="form-actions">
+            <button type="button" id="btn-init-sheet" class="btn-secondary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              헤더 행 생성
+            </button>
+            <button type="submit" class="btn-primary">설정 저장</button>
+          </div>
+        </section>
+      </form>
+
+      <!-- 초대코드 생성 -->
+      <section class="section" id="section-invite" style="display:none;">
+        <h2>팀원 초대</h2>
+        <p class="section-desc">
+          아래 초대코드를 팀원에게 공유하세요.<br>
+          <strong>중요:</strong> Google Sheets와 Drive 폴더도 팀원에게 공유(편집 권한)해야 합니다.
+        </p>
+        <div class="invite-code-box">
+          <code id="invite-code-display" class="invite-code"></code>
+          <button type="button" id="btn-copy-invite" class="btn-icon" title="복사">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+            </svg>
+          </button>
+        </div>
+        <div class="share-reminder">
+          <div class="reminder-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
+          <div class="reminder-text">
+            <strong>공유 체크리스트</strong>
+            <ul>
+              <li>Google Sheets → 팀원 이메일로 <em>편집자</em> 권한 공유</li>
+              <li>Google Drive 폴더 → 팀원 이메일로 <em>편집자</em> 권한 공유</li>
+              <li>초대코드를 팀원에게 전달</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ============ 팀원: 초대코드 입력 ============ -->
+    <div id="member-flow" style="display:none;">
+      <section class="section">
+        <div class="step-badge">Step 3</div>
+        <h2>초대코드 입력</h2>
+        <p class="section-desc">관리자에게 받은 초대코드를 입력하세요.</p>
+        <div class="form-group">
+          <div class="invite-input-row">
+            <input type="text" id="invite-code-input" placeholder="초대코드를 붙여넣으세요" />
+            <button type="button" id="btn-join" class="btn-primary">참여하기</button>
+          </div>
+        </div>
+        <div id="join-result" style="display:none;"></div>
+      </section>
+
+      <!-- 참여 후 개인 설정 -->
+      <section class="section" id="section-member-settings" style="display:none;">
+        <h2>개인 설정</h2>
+        <div class="form-group">
+          <label for="member-assignee">기본 담당자 (내 이름)</label>
+          <input type="text" id="member-assignee" placeholder="홍길동" />
+        </div>
+        <button type="button" id="btn-member-save" class="btn-primary" style="width:100%;">저장</button>
+      </section>
+    </div>
+
+    <!-- ============ 설정 완료 상태 ============ -->
+    <section class="section" id="section-configured" style="display:none;">
+      <div class="configured-header">
+        <div class="configured-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <div>
+          <h2>설정 완료</h2>
+          <p class="section-desc" id="configured-desc">QA Capture를 사용할 준비가 되었습니다.</p>
+        </div>
+      </div>
+      <div class="configured-details" id="configured-details"></div>
+      <div class="configured-actions">
+        <button type="button" id="btn-reconfigure" class="btn-secondary">설정 변경</button>
+        <button type="button" id="btn-reset" class="btn-danger-text">초기화</button>
+      </div>
+    </section>
+
+    <div id="status-message" class="status-message" style="display:none;"></div>
+
+    <!-- 사용 가이드 -->
+    <section class="section guide" id="section-guide">
+      <h2>사용법</h2>
+      <ol>
+        <li><kbd>Alt+Shift+Q</kbd> 를 눌러 캡처 모드 진입</li>
+        <li>마우스로 캡처할 영역을 드래그</li>
+        <li>QA 폼에서 분류, 심각도, 코멘트 입력</li>
+        <li>제출하면 스크린샷은 Drive에, 기록은 Sheets에 자동 저장</li>
+      </ol>
+    </section>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

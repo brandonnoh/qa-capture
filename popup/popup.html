@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QA Capture</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- 헤더 -->
+    <header class="header">
+      <div class="header-title">
+        <div class="logo">QA</div>
+        <h1>QA Capture</h1>
+      </div>
+      <button id="btn-settings" class="btn-icon" title="설정">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- 스크린샷 미리보기 -->
+    <div class="preview-section">
+      <div id="preview-container" class="preview-container">
+        <img id="preview-image" alt="캡처된 스크린샷" />
+        <div id="preview-empty" class="preview-empty">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+          </svg>
+          <p>Alt+Shift+Q로 캡처하세요</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- QA 폼 -->
+    <form id="qa-form" class="form">
+      <!-- 분류 + 심각도 (한 줄) -->
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label for="category">분류</label>
+          <select id="category" required>
+            <option value="">선택</option>
+            <option value="UI">UI</option>
+            <option value="기능">기능</option>
+            <option value="정책">정책</option>
+            <option value="성능">성능</option>
+            <option value="접근성">접근성</option>
+          </select>
+        </div>
+        <div class="form-group flex-1">
+          <label for="severity">심각도</label>
+          <select id="severity" required>
+            <option value="">선택</option>
+            <option value="Critical">Critical</option>
+            <option value="Major">Major</option>
+            <option value="Minor">Minor</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 담당자 -->
+      <div class="form-group">
+        <label for="assignee">담당자</label>
+        <input type="text" id="assignee" placeholder="담당자 이름" />
+      </div>
+
+      <!-- 코멘트 -->
+      <div class="form-group">
+        <label for="comment">코멘트 <span class="required">*</span></label>
+        <textarea id="comment" rows="2" placeholder="이슈에 대한 설명을 입력하세요" required></textarea>
+      </div>
+
+      <!-- 재현단계 -->
+      <div class="form-group">
+        <label for="repro-steps">재현단계</label>
+        <textarea id="repro-steps" rows="2" placeholder="1. 페이지 접속&#10;2. 버튼 클릭&#10;3. ..."></textarea>
+      </div>
+
+      <!-- 환경 정보 표시 -->
+      <div id="env-info" class="env-info" style="display:none;">
+        <button type="button" class="env-toggle" id="env-toggle">
+          <span>환경 정보</span>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div id="env-details" class="env-details" style="display:none;">
+          <div id="env-content"></div>
+        </div>
+      </div>
+
+      <!-- 제출 버튼 -->
+      <button type="submit" id="btn-submit" class="btn-submit">
+        <span id="btn-text">제출하기</span>
+        <div id="btn-loader" class="loader" style="display:none;"></div>
+      </button>
+    </form>
+
+    <!-- 상태 메시지 -->
+    <div id="status-message" class="status-message" style="display:none;"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
