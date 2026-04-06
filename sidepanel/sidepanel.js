@@ -78,15 +78,19 @@ function displayEnvInfo(envInfo) {
 
 // --- DOM 요소 정보 ---
 async function loadElementInfo() {
-  const stored = await chrome.storage.session.get('elementInfo');
-  if (stored.elementInfo) displayElementInfo(stored.elementInfo);
+  const stored = await chrome.storage.session.get('captureData');
+  const data = stored.captureData;
+  if (data && data.elementInfo) {
+    displayElementInfo(data.elementInfo);
+  }
 }
 
 function displayElementInfo(info) {
   if (!info) return;
   getEl('el-tag').textContent = info.tagName || '';
   getEl('el-id').textContent = info.id || '(없음)';
-  getEl('el-class').textContent = info.className || '(없음)';
+  const classes = Array.isArray(info.classList) ? info.classList.join(' ') : (info.className || '');
+  getEl('el-class').textContent = classes || '(없음)';
   getEl('el-text').textContent = truncate(info.textContent || '', 80);
   getEl('el-selector').textContent = info.selector || '';
   getEl('element-info').classList.remove('hidden');
@@ -235,17 +239,26 @@ function setSubmitLoading(loading) {
   getEl('btn-loader').classList.toggle('hidden', !loading);
 }
 
-// --- 백그라운드 메시지 수신 ---
+// --- 백그라운드 메시지 + 스토리지 변경 수신 ---
 function listenForBackgroundMessages() {
+  // background에서 capture-updated 메시지 수신
   chrome.runtime.onMessage.addListener((message) => {
-    if (message.action === 'capture-complete' && message.screenshot) {
-      displayScreenshot(message.screenshot);
-      if (message.envInfo) displayEnvInfo(message.envInfo);
-    }
-    if (message.action === 'element-selected' && message.elementInfo) {
-      displayElementInfo(message.elementInfo);
+    if (message.action === 'capture-updated') {
+      reloadCaptureData();
     }
   });
+
+  // storage 변경 감지 (fallback)
+  chrome.storage.session.onChanged.addListener((changes) => {
+    if (changes.captureData) {
+      reloadCaptureData();
+    }
+  });
+}
+
+async function reloadCaptureData() {
+  await loadCaptureData();
+  await loadElementInfo();
 }
 
 // --- 상태 메시지 ---

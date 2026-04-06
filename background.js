@@ -32,11 +32,6 @@ async function showLoginRequiredToast(tabId) {
   }});
 }
 
-async function openSidePanel(tab) {
-  const windowId = tab.windowId || (await chrome.windows.getCurrent()).id;
-  await chrome.sidePanel.open({ windowId });
-}
-
 function notifySidePanel(action, data) {
   chrome.runtime.sendMessage({ action, ...data }).catch(() => {});
 }
@@ -52,6 +47,9 @@ async function handleShortcut(scriptFile) {
   const tab = await getActiveTab();
   if (!isCapturableTab(tab)) return;
   if (!(await checkLoggedIn())) { await showLoginRequiredToast(tab.id); return; }
+  // 단축키는 사용자 제스처이므로 여기서 Side Panel을 먼저 열 수 있음
+  const windowId = tab.windowId || (await chrome.windows.getCurrent()).id;
+  chrome.sidePanel.open({ windowId }).catch(() => {});
   await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: [scriptFile] });
 }
 
@@ -72,7 +70,7 @@ async function handleCaptureComplete(message, sender, selectionKey) {
   };
   if (message.elementInfo) captureData.elementInfo = message.elementInfo;
   await chrome.storage.session.set({ captureData });
-  await openSidePanel(tab);
+  // Side Panel은 이미 사용자 제스처 시점에 열려 있음
   notifySidePanel('capture-updated', { timestamp: captureData.timestamp });
 }
 
