@@ -10,7 +10,8 @@
     "identity",
     "storage",
     "offscreen",
-    "tabs"
+    "tabs",
+    "sidePanel"
   ],
   "host_permissions": [
     "https://www.googleapis.com/*",
@@ -37,6 +38,9 @@
     },
     "default_title": "QA Capture"
   },
+  "side_panel": {
+    "default_path": "sidepanel/sidepanel.html"
+  },
   "commands": {
     "capture-qa": {
       "suggested_key": {
@@ -44,6 +48,13 @@
         "mac": "Alt+Shift+Q"
       },
       "description": "QA 스크린샷 캡처"
+    },
+    "inspect-element": {
+      "suggested_key": {
+        "default": "Alt+Shift+E",
+        "mac": "Alt+Shift+E"
+      },
+      "description": "DOM 요소 선택"
     }
   },
   "options_page": "options/options.html",

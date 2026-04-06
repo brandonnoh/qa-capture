@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QA Capture</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <div class="panel">
+    <!-- 헤더 -->
+    <header class="header">
+      <div class="header-title">
+        <div class="logo">QA</div>
+        <h1>QA Capture</h1>
+      </div>
+      <button id="btn-settings" class="btn-icon" title="설정">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- 액션 버튼 -->
+    <div class="action-buttons">
+      <button type="button" id="btn-area-capture" class="btn-action">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>
+        </svg>
+        <span>영역 캡처</span>
+      </button>
+      <button type="button" id="btn-element-inspect" class="btn-action">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+        </svg>
+        <span>요소 선택</span>
+      </button>
+    </div>
+
+    <!-- 스크롤 가능한 콘텐츠 영역 -->
+    <div class="content">
+      <!-- 스크린샷 미리보기 -->
+      <div class="preview-section">
+        <div id="preview-container" class="preview-container">
+          <img id="preview-image" alt="캡처된 스크린샷" />
+          <div id="preview-empty" class="preview-empty">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+            </svg>
+            <p>캡처 버튼을 눌러 시작하세요</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- DOM 요소 정보 (기본 숨김) -->
+      <div id="element-info" class="element-info hidden">
+        <div class="element-info-header">
+          <span class="element-info-title">선택된 요소</span>
+          <button type="button" id="btn-clear-element" class="btn-clear" title="선택 해제">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="element-info-body">
+          <div class="element-row">
+            <span class="element-label">태그</span>
+            <span id="el-tag" class="element-value mono"></span>
+          </div>
+          <div class="element-row">
+            <span class="element-label">ID</span>
+            <span id="el-id" class="element-value mono"></span>
+          </div>
+          <div class="element-row">
+            <span class="element-label">클래스</span>
+            <span id="el-class" class="element-value mono"></span>
+          </div>
+          <div class="element-row">
+            <span class="element-label">텍스트</span>
+            <span id="el-text" class="element-value"></span>
+          </div>
+          <div class="element-row">
+            <span class="element-label">선택자</span>
+            <span id="el-selector" class="element-value mono selector"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- QA 폼 -->
+      <form id="qa-form" class="form">
+        <!-- 분류 -->
+        <div class="form-group">
+          <label>분류</label>
+          <div class="tag-group" id="category-tags">
+            <button type="button" class="tag" data-value="UI">UI</button>
+            <button type="button" class="tag" data-value="기능">기능</button>
+            <button type="button" class="tag" data-value="데이터">데이터</button>
+            <button type="button" class="tag" data-value="성능">성능</button>
+            <button type="button" class="tag" data-value="호환성">호환성</button>
+            <button type="button" class="tag" data-value="보안">보안</button>
+            <button type="button" class="tag" data-value="UX">UX</button>
+          </div>
+          <input type="hidden" id="category" value="" />
+        </div>
+
+        <!-- 심각도 -->
+        <div class="form-group">
+          <label>심각도</label>
+          <div class="tag-group" id="severity-tags">
+            <button type="button" class="tag tag-critical" data-value="심각">심각</button>
+            <button type="button" class="tag tag-major" data-value="보통">보통</button>
+            <button type="button" class="tag tag-minor" data-value="경미">경미</button>
+          </div>
+          <input type="hidden" id="severity" value="" />
+        </div>
+
+        <!-- 담당자 -->
+        <div class="form-group">
+          <label for="assignee">담당자</label>
+          <input type="text" id="assignee" placeholder="담당자 이메일" />
+        </div>
+
+        <!-- 코멘트 -->
+        <div class="form-group">
+          <label for="comment">코멘트 <span class="required">*</span></label>
+          <textarea id="comment" rows="3" placeholder="이슈에 대한 설명을 입력하세요" required></textarea>
+        </div>
+
+        <!-- 재현단계 -->
+        <div class="form-group">
+          <label for="repro-steps">재현단계</label>
+          <textarea id="repro-steps" rows="4" placeholder="1. 페이지 접속&#10;2. 버튼 클릭&#10;3. ..."></textarea>
+        </div>
+
+        <!-- 환경 정보 -->
+        <div id="env-info" class="env-info hidden">
+          <button type="button" class="env-toggle" id="env-toggle">
+            <span>환경 정보</span>
+            <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </button>
+          <div id="env-details" class="env-details hidden">
+            <div id="env-content"></div>
+          </div>
+        </div>
+
+        <!-- 제출 버튼 -->
+        <button type="submit" id="btn-submit" class="btn-submit">
+          <span id="btn-text">제출하기</span>
+          <div id="btn-loader" class="loader hidden"></div>
+        </button>
+
+        <p class="shortcut-hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd>로 빠른 제출</p>
+      </form>
+
+      <!-- 상태 메시지 -->
+      <div id="status-message" class="status-message hidden"></div>
+    </div>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>

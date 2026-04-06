@@ -85,6 +85,35 @@ document.getElementById('btn-capture').addEventListener('click', async () => {
   }
 });
 
+// 요소 선택
+document.getElementById('btn-inspect').addEventListener('click', async () => {
+  try {
+    const loggedIn = await new Promise((resolve) => {
+      chrome.identity.getAuthToken({ interactive: false }, (t) => {
+        resolve(!!t && !chrome.runtime.lastError);
+      });
+    });
+    if (!loggedIn) {
+      showToast('먼저 Google 로그인이 필요합니다.');
+      return;
+    }
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !tab.url) { showToast('탭을 찾을 수 없습니다.'); return; }
+    if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
+      showToast('이 페이지에서는 사용할 수 없습니다.');
+      return;
+    }
+    const result = await chrome.runtime.sendMessage({ action: 'start-element-inspect', tabId: tab.id });
+    if (result?.ok) {
+      window.close();
+    } else {
+      showToast(result?.error || '요소 선택을 시작할 수 없습니다.');
+    }
+  } catch (err) {
+    showToast('요소 선택 실패: ' + err.message);
+  }
+});
+
 document.getElementById('btn-settings').addEventListener('click', () => {
   chrome.runtime.openOptionsPage();
   window.close();
