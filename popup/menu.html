@@ -52,17 +52,12 @@
       text-align: left;
       transition: background 0.12s;
     }
-    .menu-item:hover {
-      background: #f1f5f9;
-    }
-    .menu-item svg {
-      flex-shrink: 0;
-      color: #64748b;
-    }
-    .menu-item:first-child svg { color: #4A90FF; }
+    .menu-item:hover { background: #f1f5f9; }
+    .menu-item svg { flex-shrink: 0; color: #64748b; }
     .menu-item .label {
       display: flex;
       flex-direction: column;
+      flex: 1;
     }
     .menu-item .sublabel {
       font-size: 11px;
@@ -74,6 +69,60 @@
       background: #f1f5f9;
       margin: 4px 6px;
     }
+    /* 로그인 영역 */
+    .auth-section {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .auth-logged-in {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .auth-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      background-size: cover;
+      flex-shrink: 0;
+    }
+    .auth-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .auth-email {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1e293b;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .auth-status {
+      font-size: 10px;
+      color: #22c55e;
+    }
+    .btn-login {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 9px;
+      background: #4A90FF;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-login:hover { background: #3A7CE6; }
+    .btn-login svg { flex-shrink: 0; }
+    /* 하단 상태 */
     .status-bar {
       padding: 8px 16px 10px;
       font-size: 11px;
@@ -90,6 +139,7 @@
       background: #cbd5e1;
     }
     .status-dot.active { background: #22c55e; }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
@@ -98,9 +148,28 @@
     <h1>QA Capture</h1>
   </div>
 
+  <!-- 로그인 영역 -->
+  <div class="auth-section">
+    <div id="auth-logged-out">
+      <button class="btn-login" id="btn-login">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
+        Google 로그인
+      </button>
+    </div>
+    <div id="auth-logged-in" class="auth-logged-in hidden">
+      <div id="auth-avatar" class="auth-avatar"></div>
+      <div class="auth-info">
+        <div id="auth-email" class="auth-email"></div>
+        <div class="auth-status">연결됨</div>
+      </div>
+    </div>
+  </div>
+
   <div class="menu">
     <button class="menu-item" id="btn-capture">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4A90FF" stroke-width="2">
         <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
       </svg>
       <span class="label">
@@ -125,13 +194,50 @@
   </div>
 
   <script>
+    const authLoggedOut = document.getElementById('auth-logged-out');
+    const authLoggedIn = document.getElementById('auth-logged-in');
+    const authAvatar = document.getElementById('auth-avatar');
+    const authEmail = document.getElementById('auth-email');
+    const btnLogin = document.getElementById('btn-login');
+
+    // 로그인 상태 확인
+    async function checkAuth() {
+      try {
+        const token = await new Promise((resolve, reject) => {
+          chrome.identity.getAuthToken({ interactive: false }, (token) => {
+            if (chrome.runtime.lastError || !token) reject();
+            else resolve(token);
+          });
+        });
+        const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const user = await res.json();
+        authLoggedOut.classList.add('hidden');
+        authLoggedIn.classList.remove('hidden');
+        authEmail.textContent = user.email;
+        if (user.picture) {
+          authAvatar.style.backgroundImage = `url(${user.picture})`;
+        }
+      } catch {
+        authLoggedOut.classList.remove('hidden');
+        authLoggedIn.classList.add('hidden');
+      }
+    }
+
+    // 로그인 버튼
+    btnLogin.addEventListener('click', () => {
+      chrome.identity.getAuthToken({ interactive: true }, (token) => {
+        if (!chrome.runtime.lastError && token) {
+          checkAuth();
+        }
+      });
+    });
+
     // 캡처 시작
     document.getElementById('btn-capture').addEventListener('click', async () => {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
-        return;
-      }
-      // 팝업 닫히고 캡처 시작
+      if (!tab || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) return;
       chrome.runtime.sendMessage({ action: 'start-capture', tabId: tab.id });
       window.close();
     });
@@ -144,6 +250,7 @@
 
     // 상태 확인
     (async () => {
+      await checkAuth();
       const dot = document.getElementById('status-dot');
       const text = document.getElementById('status-text');
       const settings = await chrome.storage.sync.get(['spreadsheetId', 'driveFolderId']);
