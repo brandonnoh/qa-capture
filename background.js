@@ -314,7 +314,65 @@ async function appendToSheet(spreadsheetId, sheetName, rowData) {
     const errBody = await resp.json().catch(() => ({}));
     throw new Error(errBody.error?.message || `Sheets 저장 실패 (${resp.status})`);
   }
-  return resp.json();
+  const result = await resp.json();
+
+  // 추가된 행의 서식 초기화 (헤더 스타일 상속 방지)
+  await clearRowFormat(spreadsheetId, sheetName, result);
+  return result;
+}
+
+async function clearRowFormat(spreadsheetId, sheetName, appendResult) {
+  try {
+    // 추가된 행 번호 추출 (예: "Sheet1!A5:P5" → row 4, 0-indexed)
+    const updatedRange = appendResult.updates?.updatedRange || '';
+    const match = updatedRange.match(/!A(\d+):/);
+    if (!match) return;
+    const rowIndex = parseInt(match[1], 10) - 1;
+
+    // 시트 ID 조회
+    const sheetResp = await fetchWithAuth(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties`
+    );
+    if (!sheetResp.ok) return;
+    const sheetData = await sheetResp.json();
+    const sheet = sheetData.sheets?.find((s) => s.properties.title === sheetName);
+    if (!sheet) return;
+
+    // 해당 행 서식 초기화 (흰색 배경, 검정 텍스트, 볼드 해제)
+    await fetchWithAuth(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requests: [{
+            repeatCell: {
+              range: {
+                sheetId: sheet.properties.sheetId,
+                startRowIndex: rowIndex,
+                endRowIndex: rowIndex + 1,
+                startColumnIndex: 0,
+                endColumnIndex: 16,
+              },
+              cell: {
+                userEnteredFormat: {
+                  backgroundColor: { red: 1, green: 1, blue: 1 },
+                  textFormat: {
+                    bold: false,
+                    foregroundColor: { red: 0, green: 0, blue: 0 },
+                    fontSize: 10,
+                  },
+                },
+              },
+              fields: 'userEnteredFormat(backgroundColor,textFormat)',
+            },
+          }],
+        }),
+      }
+    );
+  } catch {
+    // 서식 초기화 실패해도 데이터는 이미 저장됨
+  }
 }
 
 function buildRowData(formData, captureData, webViewLink) {
